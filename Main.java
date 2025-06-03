@@ -9,8 +9,15 @@ import javafx.geometry.Pos;
 import javafx.event.EventHandler;
 import javafx.event.ActionEvent;
 
+
 public class Main extends Application 
 { 
+
+  public static void main(String[] args) {
+    launch(args);
+  }
+
+  
   
   @Override
   public void start(Stage primaryStage) {
@@ -38,12 +45,9 @@ public class Main extends Application
     vbox.setAlignment(Pos.CENTER);
     scene = new Scene(vbox, 300, 200);
     
-    primaryStage.setTitle("A Simple Scene!");
+    primaryStage.setTitle("Loggin Screen");
     primaryStage.setScene(scene);
     primaryStage.show();
   } 
     
-  public static void main(String[] args) {
-    launch(args);
-  }
 } 
