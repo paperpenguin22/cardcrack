@@ -26,7 +26,7 @@ public class Main extends Application {
     private void createLoginWindow() {
         primaryStage.setTitle("Login");
         VBox loginLayout = new VBox(10);
-        loginLayout.setPadding(new Insets(20));
+        loginLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
         PasswordField passField = new PasswordField();
@@ -36,17 +36,12 @@ public class Main extends Application {
         loginLayout.getChildren().addAll(new Label("Username:"), userField,
                 new Label("Password:"), passField, loginButton, registerButton);
 
+        // Login button does nothing
         loginButton.setOnAction(e -> {
-            String username = userField.getText();
-            // Password checking removed
-            if (users.containsKey(username)) {
-                showAlert("Login successful!");
-                // Proceed further as needed
-            } else {
-                showAlert("Invalid credentials.");
-            }
+            //add the login code
         });
 
+        // Register button opens registration window
         registerButton.setOnAction(e -> createRegisterWindow());
 
         primaryStage.setScene(new Scene(loginLayout, 300, 200));
@@ -57,7 +52,7 @@ public class Main extends Application {
         Stage registerStage = new Stage();
         registerStage.setTitle("Register");
         VBox registerLayout = new VBox(10);
-        registerLayout.setPadding(new Insets(20));
+        registerLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
         PasswordField passField = new PasswordField();
@@ -67,30 +62,18 @@ public class Main extends Application {
         registerLayout.getChildren().addAll(new Label("New Username:"), userField,
                 new Label("New Password:"), passField, registerButton, backButton);
 
+        // Register button does nothing
         registerButton.setOnAction(e -> {
-            String username = userField.getText().trim();
-            String password = passField.getText().trim();
-
-            if (username.isEmpty() || password.isEmpty()) {
-                showAlert("Fields cannot be empty.");
-                return;
-            }
-
-            if (users.containsKey(username)) {
-                showAlert("Username already exists.");
-            } else {
-                users.put(username, password);
-                showAlert("Account created! Please log in.");
-                registerStage.close();
-            }
+            //add the registering code 
         });
 
+        // Back button closes register window and returns to login window
         backButton.setOnAction(e -> {
             registerStage.close();
             createLoginWindow();
         });
 
-        registerStage.setScene(new Scene(registerLayout, 300, 200));
+        registerStage.setScene(new Scene(registerLayout, 600, 400));
         registerStage.show();
     }
 

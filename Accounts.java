@@ -7,9 +7,9 @@ public class Accounts{
     private String email;
     private String name;
     private String password;
-    private Map <String, Map <String, List <String> > > subjects; //Nested Map - Subjects, Units, Questions
-    private List <String> friends;
-    private Map <LocalDate, CalendarEvent> calendar;
+    private Map<String, Map<String, List<String>>> subjects; //Nested Map - Subjects, Units, Questions
+    private List<String> friends;
+    private Map<LocalDate, CalendarEvent> calendar;
     
     static final String saveFile = "accounts.txt";
 
@@ -31,6 +31,27 @@ public class Accounts{
     }
 
     public static void save(Account account){
-        List<String> lines = Files.exists(saveFile.toPath()) ? 
+        //Compact if else statement
+        List<String> lines = Files.exists(saveFile.toPath()) ? Files.readAllLines(saveFile.toPath()) : new ArrayList<>();
+
+        List<String> updated = new ArrayList<>();
+        boolean found = false;
+
+        for(int i = 0; i < lines.size(); ){
+            if(lines.get(i).equals(name)){
+                found = true;
+                while(i < lines.size() && !lines.get(i).equals("exit"))
+                    i++;
+                i++; //Skips "exit"
+            } else {
+                updated.add(lines.get(i++));
+            }
+        }
+
+        update.add(email);
+        update.add(name);
+        update.add(password);
+
+        
     }
 }
