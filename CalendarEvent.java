@@ -6,7 +6,7 @@ public class CalendarEvent{
   private String type;  //Assaignment, Unit Test, Exam...
   private String description;
 
-  public CalendarEvent(){
+  public CalendarEvent(String subject, String unit, String type, String description){
     this.subject = subject;
     this.unit = unit;
     this.type = type;
@@ -33,5 +33,15 @@ public class CalendarEvent{
   public String toString() {
     return subject + " " + unit + " " + type + " " + description;
   }
-  
+
+  // Static method to parse a CalendarEvent from a saved string line
+  public static CalendarEvent fromString(String line) {
+    String[] parts = line.split("\\|", -1); // -1 to keep empty strings if any
+    
+    if (parts.length != 4) {
+      throw new IllegalArgumentException("Invalid calendar event data: " + line);
+    }
+    
+    return new CalendarEvent(parts[0], parts[1], parts[2], parts[3]);
+  }
 }

@@ -1,3 +1,5 @@
+import java.io.*;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -17,6 +19,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        primaryStage.setTitle("Login");
         createLoginWindow();
     }
 
@@ -26,62 +29,67 @@ public class Main extends Application {
         loginLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
-        TextField emailField = new TextField(); // Email field for login
         PasswordField passField = new PasswordField();
         Button loginButton = new Button("Login");
         Button registerButton = new Button("Register");
 
         loginLayout.getChildren().addAll(
-                new Label("Username:"), userField,
-                new Label("Email:"), emailField, // Add email label and field
-                new Label("Password:"), passField,
-                loginButton, registerButton
+            new Label("Username:"), userField,
+            new Label("Password:"), passField, loginButton, registerButton
         );
 
-        // Login button does nothing
+        //Log in button
         loginButton.setOnAction(e -> {
-            //add the login code
+            String username = userField.getText();
+            String password = passField.getText();
+
+            File saveFile = new File("accounts.txt");
+            try{
+                Accounts account = Accounts.load(username, saveFile);
+                if(account != null && account.getPassword().equals(password)){
+                    showAlert("Login successful!");
+                } else {
+                    showAlert("Invalid username or password.");
+                }
+            }
+            catch (Exception ex){
+                showAlert("Error loading account");
+                ex.printStackTrace();
+            }
         });
 
         // Register button opens registration window
         registerButton.setOnAction(e -> createRegisterWindow());
 
-        primaryStage.setScene(new Scene(loginLayout, 300, 250));
+        Scene loginScene = new Scene(loginLayout);
+        primaryStage.setScene(loginScene);
+        primaryStage.setMaximized(true);
         primaryStage.show();
     }
 
     private void createRegisterWindow() {
-        Stage registerStage = new Stage();
-        registerStage.setTitle("Register");
+        primaryStage.setTitle("Register");
         VBox registerLayout = new VBox(10);
         registerLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
-        TextField emailField = new TextField(); // Email field for registration
+        TextField emailField = new TextField();
         PasswordField passField = new PasswordField();
-        Button registerButton = new Button("Create Account");
-        Button backButton = new Button("Back to Login");
+        Button loginButton = new Button("Login");
 
         registerLayout.getChildren().addAll(
-                new Label("New Username:"), userField,
-                new Label("Email:"), emailField, // Add email label and field
-                new Label("New Password:"), passField,
-                registerButton, backButton
+            new Label("Username:"), userField,
+            new Label("Email:"), emailField,
+            new Label("Password:"), passField, loginButton
         );
 
-        // Register button does nothing
-        registerButton.setOnAction(e -> {
-            //add the registering code 
-        });
+        // Register button opens registration window
+        loginButton.setOnAction(e -> createLoginWindow());
 
-        // Back button closes register window and returns to login window
-        backButton.setOnAction(e -> {
-            registerStage.close();
-            createLoginWindow();
-        });
-
-        registerStage.setScene(new Scene(registerLayout, 600, 400));
-        registerStage.show();
+        Scene registerScene = new Scene(registerLayout);
+        primaryStage.setScene(registerScene);
+        primaryStage.setMaximized(true);
+        primaryStage.show();
     }
 
     private void showAlert(String message) {
