@@ -101,9 +101,14 @@ public class Accounts{
                     if(lines.startsWith("Test: ")){
                         String[] parts = line.substring(6).split("\\|", 2);
                         LocalDate date = LocalDate.parse(parts[0]);
+                        CalendarEvent event = CalendarEvent.fromString(parts[1]);
+                        account.calendar.put(date, info);
                     }
+                    i++;
                 }
+                return account;
             }
         }
+        return null;
     }
 }
