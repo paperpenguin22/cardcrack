@@ -1,8 +1,5 @@
 import javafx.application.Application;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
@@ -29,12 +26,17 @@ public class Main extends Application {
         loginLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
+        TextField emailField = new TextField(); // Email field for login
         PasswordField passField = new PasswordField();
         Button loginButton = new Button("Login");
         Button registerButton = new Button("Register");
 
-        loginLayout.getChildren().addAll(new Label("Username:"), userField,
-                new Label("Password:"), passField, loginButton, registerButton);
+        loginLayout.getChildren().addAll(
+                new Label("Username:"), userField,
+                new Label("Email:"), emailField, // Add email label and field
+                new Label("Password:"), passField,
+                loginButton, registerButton
+        );
 
         // Login button does nothing
         loginButton.setOnAction(e -> {
@@ -44,7 +46,7 @@ public class Main extends Application {
         // Register button opens registration window
         registerButton.setOnAction(e -> createRegisterWindow());
 
-        primaryStage.setScene(new Scene(loginLayout, 300, 200));
+        primaryStage.setScene(new Scene(loginLayout, 300, 250));
         primaryStage.show();
     }
 
@@ -55,12 +57,17 @@ public class Main extends Application {
         registerLayout.setPadding(new Insets(200));
 
         TextField userField = new TextField();
+        TextField emailField = new TextField(); // Email field for registration
         PasswordField passField = new PasswordField();
         Button registerButton = new Button("Create Account");
         Button backButton = new Button("Back to Login");
 
-        registerLayout.getChildren().addAll(new Label("New Username:"), userField,
-                new Label("New Password:"), passField, registerButton, backButton);
+        registerLayout.getChildren().addAll(
+                new Label("New Username:"), userField,
+                new Label("Email:"), emailField, // Add email label and field
+                new Label("New Password:"), passField,
+                registerButton, backButton
+        );
 
         // Register button does nothing
         registerButton.setOnAction(e -> {
