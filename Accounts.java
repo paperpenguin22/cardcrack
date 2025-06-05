@@ -34,7 +34,7 @@ public class Accounts{
         //Accounts.addCalendarEvent(LocalDate.of(2025, 6, 20), "Subject", "Unit", "Type", "Description");
     }
 
-    public static void save(Accounts account){
+    public static void save(Accounts account) throws IOException{
         //Compact if else statement
         List<String> lines = Files.exists(saveFile) ? Files.readAllLines(saveFile) : new ArrayList<>();
 
@@ -55,6 +55,7 @@ public class Accounts{
         updated.add(account.email);
         updated.add(account.name);
         updated.add(account.password);
+        System.out.print("Updated");
 
         for(String subject: account.subjects.keySet()){
             updated.add("Subject: "  + subject);
@@ -74,7 +75,7 @@ public class Accounts{
         Files.write(saveFile, updated);
     }
 
-    public static Accounts load(String name, File saveFile){
+    public static Accounts load(String name, File saveFile) throws IOException{
         if(!saveFile.exists())
             return null;
         
@@ -118,5 +119,9 @@ public class Accounts{
 
     public String getPassword() {
         return password;
+    }
+
+    public String getEmail() {
+        return email;
     }
 }
