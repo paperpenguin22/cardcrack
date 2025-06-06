@@ -4,8 +4,10 @@ import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import java.util.HashMap;
+import javafx.scene.layout.BorderPane;
 
 public class Main extends Application {
     private Stage primaryStage;
@@ -24,18 +26,26 @@ public class Main extends Application {
 
     public void homePage(){
         primaryStage.setTitle("Home Page");
-        VBox homeLayout = new VBox(10);
-        homeLayout.setPadding(new Insets(200));
-        
+
+        BorderPane homeLayout = new BorderPane();
+        homeLayout.setPadding(new Insets(20));
+
+        HBox topBar = new HBox(10);
+        topBar.setPadding(new Insets(10));
+
+        Label searchLabel = new Label("Search:");
         TextField searchField = new TextField();
         Button calendarButton = new Button("Calendar");
 
-        homeLayout.getChildren().addAll(
-            new Label("Search:"), searchField,
-            calendarButton
-        );
+        topBar.getChildren().addAll(searchLabel, searchField);
 
-        calendarButton.setOnAction(e -> System.exit(0));
+        homeLayout.setTop(topBar);
+        homeLayout.setBottom(calendarButton);
+
+        calendarButton.setOnAction(e -> {
+            Calendar calendarView = new Calendar(primaryStage, Accounts.getCalendar());
+            Calendar.calendar();
+        });
 
         primaryStage.setScene(new Scene(homeLayout));
         primaryStage.setMaximized(true);
