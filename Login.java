@@ -124,14 +124,19 @@ public class Login {
         emailErrorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 10px;");
         emailErrorLabel.setVisible(false);
 
+        // Initially disable register button
+        registerButton.setDisable(true);
+
         // Add email validation listener
         emailField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.contains("@") && newValue.contains(".")) {
                 emailField.setStyle("-fx-text-box-border: #cccccc; -fx-focus-color: #0093ff;");
                 emailErrorLabel.setVisible(false);
+                registerButton.setDisable(false);
             } else {
                 emailField.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
                 emailErrorLabel.setVisible(true);
+                registerButton.setDisable(true);
             }
         });
 
