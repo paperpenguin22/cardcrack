@@ -87,8 +87,8 @@ public class Calendar {
 
     Button addBtn = new Button("Add to Calendar");
     addBtn.setOnAction(e -> {
-      Accounts.addToCalendar(selectedDate, subjectField.getText(), unitField.getText(), typeField.getText(), descArea.getText());
       Accounts account = new Accounts(Login.getName(), Login.getEmail(), Login.getPassword());
+      account.addToCalendar(selectedDate, subjectField.getText(), unitField.getText(), typeField.getText(), descArea.getText());
       try {
         Accounts.save(account);
       } catch (IOException a) {

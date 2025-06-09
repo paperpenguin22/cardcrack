@@ -43,7 +43,8 @@ public class Main extends Application {
         homeLayout.setBottom(calendarButton);
 
         calendarButton.setOnAction(e -> {
-            Calendar calendarView = new Calendar(primaryStage, Accounts.getCalendar());
+            Accounts account = new Accounts(Login.getName(), Login.getEmail(), Login.getPassword());
+            Calendar calendarView = new Calendar(primaryStage, account.getCalendar());
             Calendar.calendar();
         });
 
