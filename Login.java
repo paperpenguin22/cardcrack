@@ -63,7 +63,7 @@ public class Login {
         
         loginLayout.getChildren().addAll(
             new Label("Username:"), userField,
-            new Label("Password:"), passField, loginButton, registerButton
+            new Label("Password:"), passwordBox, loginButton, registerButton
         );
 
         loginButton.setOnAction(e -> {
