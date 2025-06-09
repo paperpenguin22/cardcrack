@@ -151,7 +151,7 @@ public class Login {
         registerLayout.getChildren().addAll(
             new Label("Username:"), userField,
             new Label("Email:"), emailField, emailErrorLabel,
-            new Label("Password:"), passField,
+            new Label("Password:"), passwordBox,
             registerButton, loginButton
         );
 
