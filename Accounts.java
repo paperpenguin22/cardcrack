@@ -13,9 +13,9 @@ public class Accounts{
     
     static final Path saveFile = Paths.get("accounts.txt");
 
-    public Accounts(String email, String name, String password){
-        this.email = email;
+    public Accounts(String name, String email, String password){
         this.name = name;
+        this.email = email;
         this.password = password;
 
         this.subjects = new HashMap<>();
@@ -29,9 +29,9 @@ public class Accounts{
         subjects.get(subject).get(unit).add(question);
     }
 
-    public void addToCalendar(LocalDate date, String subject, String unit, String type, String description){
+    public static void addToCalendar(LocalDate date, String subject, String unit, String type, String description){
         calendar.put(date, new CalendarEvent(subject, unit, type, description, date));
-        //Accounts.addCalendarEvent(LocalDate.of(2025, 6, 20), "Subject", "Unit", "Type", "Description", "date");
+        //Accounts.addToCalendar(LocalDate.of(2025, 6, 20), "Subject", "Unit", "Type", "Description", "date");
     }
 
     public static void save(Accounts account) throws IOException{
@@ -52,8 +52,8 @@ public class Accounts{
             }
         }
 
-        updated.add(account.email);
         updated.add(account.name);
+        updated.add(account.email);
         updated.add(account.password);
         System.out.print("Updated");
 
@@ -116,6 +116,8 @@ public class Accounts{
         }
         return null;
     }
+
+    public String getName() {return name;}
 
     public String getPassword() {return password;}
 

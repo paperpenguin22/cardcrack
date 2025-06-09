@@ -12,6 +12,9 @@ import java.io.*;
 public class Login {
     private final Stage primaryStage;
     private final Main mainApp;
+    public static String username;
+    public static String password;
+    public static String email;
 
     public Login(Stage primaryStage, Main mainApp) {
         this.primaryStage = primaryStage;
@@ -64,13 +67,14 @@ public class Login {
         );
 
         loginButton.setOnAction(e -> {
-            String username = userField.getText();
-            String password = passField.getText();
+            this.username = userField.getText();
+            this.password = passField.getText();
 
             File saveFile = new File("accounts.txt");
             try {
                 Accounts account = Accounts.load(username, saveFile);
                 if (account != null && account.getPassword().equals(password)) {
+                    this.email = account.getEmail();
                     showAlert("Login successful!");
                     mainApp.homePage();
                 } else {
@@ -152,9 +156,9 @@ public class Login {
         );
 
         registerButton.setOnAction(e -> {
-            String username = userField.getText();
-            String email = emailField.getText();
-            String password = passField.getText();
+            this.username = userField.getText();
+            this.email = emailField.getText();
+            this.password = passField.getText();
 
             File saveFile = new File("accounts.txt");
             try {
@@ -164,7 +168,7 @@ public class Login {
                         showAlert("Email already in use.");
                     }
                 } else {
-                    Accounts account = new Accounts(email, username, password);
+                    Accounts account = new Accounts(username, email, password);
                     Accounts.save(account);
                     showAlert("Account creation successful!");
                     mainApp.homePage();
@@ -189,4 +193,10 @@ public class Login {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    public static String getName() {return username;}
+
+    public static String getPassword() {return password;}
+
+    public static String getEmail() {return email;}
 }
