@@ -69,7 +69,7 @@ public class Accounts{
         }
 
         for (Map.Entry<LocalDate, CalendarEvent> entry : account.calendar.entrySet()) {
-            updated.add("Test: " + entry.getKey() + "|" + entry.getValue());
+            updated.add("Test: " + entry.getValue().toSaveString());
         }
 
         updated.add("exit");
@@ -103,26 +103,28 @@ public class Accounts{
                     }
                     if (line.startsWith("Test: ")) {
                         String[] parts = line.substring(6).split("\\|", -1);
-                        if (parts.length < 2) {
+                        if (parts.length < 5) {
                             System.err.println("Invalid calendar event data: " + line);
                                 return null; // Return null instead of just return
                         }
+
+                        String subject = parts[0].trim();
+                        String unit = parts[1].trim();
+                        String type = parts[2].trim();
+                        String description = parts[3].trim();
                         LocalDate date;
+
                         try {
-                            date = LocalDate.parse(parts[0].trim());
+                            date = LocalDate.parse(parts[4].trim());
                         } catch (DateTimeParseException e) {
-                            System.err.println("Invalid date format: " + parts[0]);
-                            return null; // Return null instead of just return
+                            System.err.println("Invalid date format: " + parts[4]);
+                            return null;
                         }
-                        String eventData = String.join("|", Arrays.copyOfRange(parts, 1, parts.length));
-                        try {
-                            CalendarEvent event = CalendarEvent.fromString(eventData);
-                            account.addToCalendar(date, event.getSubject(), event.getUnit(), event.getType(), event.getDescription());
-                        } catch (IllegalArgumentException e) {
-                            System.err.println("Error parsing calendar event: " + e.getMessage());
-                        }
+
+                        // Add to calendar
+                        account.addToCalendar(date, subject, unit, type, description);
                     }
-                        i++;
+                    i++;
                 }
                 return account; // Return the populated account
             }

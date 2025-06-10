@@ -129,7 +129,7 @@ public class Login {
 
         // Add email validation listener
         emailField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.contains("@") && newValue.contains(".")) {
+            if (newValue.contains("@") && newValue.contains(".C")||newValue.contains(".c")) {
                 emailField.setStyle("-fx-text-box-border: #cccccc; -fx-focus-color: #0093ff;");
                 emailErrorLabel.setVisible(false);
                 registerButton.setDisable(false);

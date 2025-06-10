@@ -43,9 +43,19 @@ public class Main extends Application {
         homeLayout.setBottom(calendarButton);
 
         calendarButton.setOnAction(e -> {
-            Accounts account = new Accounts(Login.getName(), Login.getEmail(), Login.getPassword());
-            Calendar calendarView = new Calendar(primaryStage, account.getCalendar());
-            Calendar.calendar();
+            try {
+                File saveFile = new File("accounts.txt");
+                Accounts account = Accounts.load(Login.getName(), saveFile);
+
+                if (account != null) {
+                    Calendar calendarView = new Calendar(primaryStage, account.getCalendar());
+                    Calendar.calendar(); // This probably needs to use the account or eventMap inside the class
+                } else {
+                    System.err.println("Account not found or failed to load.");
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         });
 
         primaryStage.setScene(new Scene(homeLayout));

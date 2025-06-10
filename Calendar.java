@@ -94,6 +94,7 @@ public class Calendar {
       } catch (IOException a) {
         a.printStackTrace();
       }
+      calendar();
     });
 
     layout.getChildren().addAll(title, subjectField, unitField, typeField, descArea, addBtn, backBtn);

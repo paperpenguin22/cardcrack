@@ -45,4 +45,6 @@ public class CalendarEvent{
     
     return new CalendarEvent(parts[0], parts[1], parts[2], parts[3], LocalDate.parse(parts[4].trim()));
   }
+
+  public String toSaveString() {return subject + "|" + unit + "|" + type + "|" + description + "|" + date;}
 }

@@ -1,9 +1,5 @@
 Emory
 elu3@ocdsb.ca
 1234
-Test: 2025-06-01|English 2 Test a
-exit
-e
-e
-e
+Test: Math|Trig|Test|Review pages #1-5|2025-06-01
 exit
