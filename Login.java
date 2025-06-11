@@ -61,8 +61,8 @@ public class Login {
             input = new FileInputStream("unnamed.png");
             Image image = new Image(input);
             imageView = new ImageView(image);
-            imageView.setFitHeight(50);
-            imageView.setFitWidth(50);
+            imageView.setFitHeight(70);
+            imageView.setFitWidth(70);
             imageView.setPreserveRatio(true);
         } catch (FileNotFoundException e) {
             System.err.println("Error: Image file not found: " + e.getMessage());
@@ -87,7 +87,7 @@ public class Login {
         passwordStack.setPrefWidth(2000);
         passwordStack.getChildren().addAll(passField, passTextField);
 
-        CheckBox showPasswordBox = new CheckBox("👁");
+        CheckBox showPasswordBox = new CheckBox("o");
         showPasswordBox.setStyle("-fx-font-size: 14px;");
 
         HBox passwordBox = new HBox(5, passwordStack, showPasswordBox);
