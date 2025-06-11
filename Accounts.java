@@ -10,7 +10,7 @@ public class Accounts{
     private String password;
     private Map<String, Map<String, List<String>>> subjects; //Nested Map - Subjects, Units, Questions
     private List<String> friends;
-    private Map<LocalDate, CalendarEvent> calendar;
+    private Map<LocalDate, List<CalendarEvent>> calendar;
     
     static final Path saveFile = Paths.get("accounts.txt");
 
@@ -30,9 +30,12 @@ public class Accounts{
         subjects.get(subject).get(unit).add(question);
     }
 
-    public void addToCalendar(LocalDate date, String subject, String unit, String type, String description){
-        calendar.put(date, new CalendarEvent(subject, unit, type, description, date));
-        //Accounts.addToCalendar(LocalDate.of(2025, 6, 20), "Subject", "Unit", "Type", "Description");
+    public void addToCalendar(LocalDate date, String subject, String unit, String type, String description) {
+        CalendarEvent newEvent = new CalendarEvent(subject, unit, type, description, date);
+        List<CalendarEvent> events = calendar.getOrDefault(date, new ArrayList<>());
+
+        events.add(newEvent);
+        calendar.put(date, events);
     }
 
     public static void save(Accounts account) throws IOException{
@@ -68,8 +71,10 @@ public class Accounts{
             }
         }
 
-        for (Map.Entry<LocalDate, CalendarEvent> entry : account.calendar.entrySet()) {
-            updated.add("Test: " + entry.getValue().toSaveString());
+        for (Map.Entry<LocalDate, List<CalendarEvent>> entry : account.calendar.entrySet()) {
+            for (CalendarEvent event : entry.getValue()) {
+                updated.add("Test: " + event.toSaveString());
+            }
         }
 
         updated.add("exit");
@@ -138,5 +143,6 @@ public class Accounts{
 
     public String getEmail() {return email;}
 
-    public Map<LocalDate, CalendarEvent> getCalendar() {return calendar;}
+    public Map<LocalDate, List<CalendarEvent>> getCalendar() {return calendar;}
+
 }

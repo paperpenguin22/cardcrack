@@ -7,13 +7,14 @@ import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.Map;
+import java.util.List;
 
 public class Calendar {
   private static Stage stage;
-  private static Map<LocalDate, CalendarEvent> eventMap;
+  private static Map<LocalDate, List<CalendarEvent>> eventMap;
   private static YearMonth currentMonth;
 
-  public Calendar(Stage stage, Map<LocalDate, CalendarEvent> eventMap) {
+  public Calendar(Stage stage, Map<LocalDate, List<CalendarEvent>> eventMap) {
     Calendar.stage = stage;
     Calendar.eventMap = eventMap;
     Calendar.currentMonth = YearMonth.now();
@@ -44,9 +45,15 @@ public class Calendar {
 
       // Add event label if one exists
       if (eventMap.containsKey(thisDate)) {
-        CalendarEvent event = eventMap.get(thisDate);
-        dayButton.setText(day + "\n" + event.getSubject());
-        dayButton.setStyle("-fx-font-size: 12; -fx-border-color: black; -fx-text-alignment: center;");
+          List<CalendarEvent> events = eventMap.get(thisDate);
+          if (!events.isEmpty()) {
+              String label = day + "\n" + events.get(0).getSubject();
+              if (events.size() > 1) {
+                  label += " +";
+              }
+              dayButton.setText(label);
+              dayButton.setStyle("-fx-font-size: 12; -fx-border-color: black; -fx-text-alignment: center;");
+          }
       }
 
       // On click, open the Add Question screen
