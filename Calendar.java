@@ -13,12 +13,15 @@ public class Calendar {
   private static Stage stage;
   private static Map<LocalDate, List<CalendarEvent>> eventMap;
   private static YearMonth currentMonth;
+  private static Accounts account;
 
-  public Calendar(Stage stage, Map<LocalDate, List<CalendarEvent>> eventMap) {
-    Calendar.stage = stage;
-    Calendar.eventMap = eventMap;
-    Calendar.currentMonth = YearMonth.now();
+  public Calendar(Stage stage, Accounts account) {
+      Calendar.stage = stage;
+      Calendar.account = account;
+      Calendar.eventMap = account.getCalendar();
+      Calendar.currentMonth = YearMonth.now();
   }
+
 
   public static void calendar() {
     stage.setTitle("Calendar");
@@ -57,7 +60,8 @@ public class Calendar {
       }
 
       // On click, open the Add Question screen
-      dayButton.setOnAction(e -> openAddQuestionScreen(thisDate));
+      int date = day;
+      dayButton.setOnAction(e -> calendarAction(date, thisDate));
 
       grid.add(dayButton, column, row);
       column++;
@@ -69,6 +73,44 @@ public class Calendar {
 
     root.setCenter(grid);
     stage.setScene(new Scene(root, 800, 500));
+    stage.show();
+  }
+
+  private static void calendarAction(int date, LocalDate thisDate){
+    VBox root = new VBox(10);
+    root.setPadding(new Insets(10));
+    
+    Label title = new Label("Month" + date);
+
+    ListView<CalendarEvent> eventListView = new ListView<>();
+    List<CalendarEvent> events = account.getCalendar().getOrDefault(date, List.of());
+    eventListView.getItems().addAll(events);
+
+    Button removeBtn = new Button("Remove Event");
+    removeBtn.setOnAction(e -> {
+      CalendarEvent selected = eventListView.getSelectionModel().getSelectedItem();
+      if(selected != null){
+        account.getCalendar().get(date).remove(date);
+        eventListView.getItems().remove(selected);
+        try {
+          Accounts.save(account);
+        } catch (IOException a) {
+          a.printStackTrace();
+        }
+      }
+    });
+
+    Button addQuestionBtn = new Button("Add Question");
+    addQuestionBtn.setOnAction(e -> {
+        openAddQuestionScreen(thisDate);
+    });
+
+    HBox buttons = new HBox(10, addQuestionBtn, removeBtn);
+
+    root.getChildren().addAll(title, eventListView, buttons);
+    
+    stage.setScene(new Scene(root, 400, 400));
+    stage.centerOnScreen();
     stage.show();
   }
 
@@ -94,7 +136,6 @@ public class Calendar {
 
     Button addBtn = new Button("Add to Calendar");
     addBtn.setOnAction(e -> {
-      Accounts account = new Accounts(Login.getName(), Login.getEmail(), Login.getPassword());
       account.addToCalendar(selectedDate, subjectField.getText(), unitField.getText(), typeField.getText(), descArea.getText());
       try {
         Accounts.save(account);

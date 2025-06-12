@@ -48,7 +48,7 @@ public class Main extends Application {
                 Accounts account = Accounts.load(Login.getName(), saveFile);
 
                 if (account != null) {
-                    Calendar calendarView = new Calendar(primaryStage, account.getCalendar());
+                    Calendar calendarView = new Calendar(primaryStage, account);
                     Calendar.calendar(); // This probably needs to use the account or eventMap inside the class
                 } else {
                     System.err.println("Account not found or failed to load.");

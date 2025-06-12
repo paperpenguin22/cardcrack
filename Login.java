@@ -80,11 +80,11 @@ public class Login {
 
         passTextField.setVisible(false);
 
-        passField.setPrefWidth(2000);
-        passTextField.setPrefWidth(2000);
+        passField.setPrefWidth(800);
+        passTextField.setPrefWidth(800);
 
         StackPane passwordStack = new StackPane();
-        passwordStack.setPrefWidth(2000);
+        passwordStack.setPrefWidth(800);
         passwordStack.getChildren().addAll(passField, passTextField);
 
         CheckBox showPasswordBox = new CheckBox("o");

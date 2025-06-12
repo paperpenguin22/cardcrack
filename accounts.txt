@@ -2,4 +2,5 @@ Emory
 elu3@ocdsb.ca
 1234
 Test: English|2|Assaignment|bye|2025-06-02
+Test: Math|1|Test|hello|2025-06-01
 exit
