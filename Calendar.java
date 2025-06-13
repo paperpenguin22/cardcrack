@@ -24,6 +24,11 @@ public class Calendar {
 
 
   public static void calendar() {
+//    try {
+   //   Accounts.load(account);
+   // } catch (IOException a) {
+    //  a.printStackTrace();
+ //   }
     stage.setTitle("Calendar");
     BorderPane root = new BorderPane();
     GridPane grid = new GridPane();
