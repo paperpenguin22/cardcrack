@@ -28,7 +28,7 @@ public class Login {
         this.mainApp = mainApp;
 
         try {
-            FileInputStream input = new FileInputStream("unnamed.png");
+            FileInputStream input = new FileInputStream("logo.png");
             Image image = new Image(input);
             //Setting the image view
             ImageView imageView = new ImageView(image);
