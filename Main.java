@@ -1,18 +1,27 @@
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Application;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
+import java.time.DateTimeException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.time.LocalDate;
 import java.util.*;
 
 public class Main extends Application {
-    public static Stage primaryStage;  // global stage
-    public static Accounts account;    // currently logged in account
-    private static Login loginInstance; // keep a reference to login instance for username retrieval
+    public static Stage primaryStage;
+    public static Accounts account;
+    private static Login loginInstance;
+    private static boolean darkMode = false;
 
     public static void main(String[] args) {
         launch(args);
@@ -21,23 +30,20 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) {
         primaryStage = stage;
-        showLogin(); // start with login screen
+        showLogin();
     }
 
-    // Show the login screen
     public static void showLogin() {
         loginInstance = new Login(primaryStage, new Main());
         loginInstance.showLoginWindow();
     }
 
-    // Called after successful login/registration
     public static void homePage() {
         if (primaryStage == null) {
             System.err.println("Error: primaryStage is null.");
             return;
         }
 
-        // Load latest account info using username from login instance
         String username = loginInstance.getName();
         try {
             account = Accounts.load(username);
@@ -57,7 +63,49 @@ public class Main extends Application {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(20));
 
-        // Right pane with upcoming events and calendar button
+        HBox topBar = new HBox(20);
+        topBar.setPadding(new Insets(10));
+        topBar.setAlignment(Pos.CENTER_RIGHT);
+
+        ToggleButton darkModeToggle = new ToggleButton("Dark Mode");
+        darkModeToggle.setSelected(darkMode);
+        darkModeToggle.setOnAction(e -> {
+            darkMode = darkModeToggle.isSelected();
+            applyTheme(root);
+        });
+
+        Label clockLabel = new Label();
+        clockLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        ComboBox<String> timeZoneSelector = new ComboBox<>();
+        List<String> zones = Arrays.asList(
+            "America/Toronto",
+            "America/New_York",
+            "Europe/London",
+            "Europe/Paris",
+            "Asia/Tokyo",
+            "Australia/Sydney",
+            "UTC"
+        );
+        timeZoneSelector.getItems().addAll(zones);
+        timeZoneSelector.setValue("America/Toronto");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm a");
+
+        Timeline clockTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            String zoneId = timeZoneSelector.getValue();
+            try {
+                ZonedDateTime now = ZonedDateTime.now(ZoneId.of(zoneId));
+                clockLabel.setText("Current time: " + now.format(formatter));
+            } catch (DateTimeException ex) {
+                clockLabel.setText("Invalid timezone");
+            }
+        }));
+        clockTimeline.setCycleCount(Timeline.INDEFINITE);
+        clockTimeline.play();
+
+        topBar.getChildren().addAll(clockLabel, timeZoneSelector, darkModeToggle);
+
         Label upcomingLabel = new Label("Upcoming Events:");
         VBox eventBox = new VBox(10);
 
@@ -76,10 +124,10 @@ public class Main extends Application {
                         );
 
                         Button jumpToDateBtn = new Button("Go to Day");
-                        LocalDate selectedDate = date;  // needed for lambda capture
-                        jumpToDateBtn.setOnAction(e -> {
+                        LocalDate selectedDate = date;
+                        jumpToDateBtn.setOnAction(ev -> {
                             Calendar calView = new Calendar(primaryStage, account);
-                            calView.showCalendarForDate(selectedDate); // updated method name
+                            calView.showCalendarForDate(selectedDate);
                         });
 
                         HBox box = new HBox(10, eventLabel, jumpToDateBtn);
@@ -93,43 +141,44 @@ public class Main extends Application {
         }
 
         Button openCalendar = new Button("Open Calendar");
-        openCalendar.setOnAction(e -> {
+        openCalendar.setOnAction(ev -> {
             Calendar calView = new Calendar(primaryStage, account);
-            calView.showCalendar(); // updated method name
+            calView.showCalendar();
         });
 
-        // Left pane with buttons for friend requests, friend search, leaderboard, subjects, flashcards
         Button friendRequestsBtn = new Button("Friend Requests");
-        friendRequestsBtn.setOnAction(e -> {
+        friendRequestsBtn.setOnAction(ev -> {
             FriendRequestsView.open(primaryStage, account, new Main());
         });
 
         Button friendSearchBtn = new Button("Search Friends");
-        friendSearchBtn.setOnAction(e -> {
+        friendSearchBtn.setOnAction(ev -> {
             FriendSearchView.open(primaryStage, account, new Main());
         });
 
         Button leaderboardBtn = new Button("Leaderboard");
-        leaderboardBtn.setOnAction(e -> {
+        leaderboardBtn.setOnAction(ev -> {
             LeaderboardView.open(primaryStage, account, new Main());
         });
 
         Button subjectsBtn = new Button("Subjects");
-        subjectsBtn.setOnAction(e -> {
+        subjectsBtn.setOnAction(ev -> {
             SubjectsView.open(primaryStage, account, new Main());
         });
 
         Button flashcardsBtn = new Button("Flashcards / Quiz");
-        flashcardsBtn.setOnAction(e -> {
+        flashcardsBtn.setOnAction(ev -> {
             FlashcardsQuizView.open(primaryStage, account, new Main());
         });
 
+        // RED Logout Button
         Button logoutBtn = new Button("Logout");
-        logoutBtn.setOnAction(e -> {
+        logoutBtn.setStyle("-fx-background-color: red; -fx-text-fill: white;");
+        logoutBtn.setOnAction(ev -> {
             account = null;
             showLogin();
         });
-        
+
         VBox leftPane = new VBox(15,
             friendRequestsBtn,
             friendSearchBtn,
@@ -137,18 +186,56 @@ public class Main extends Application {
             subjectsBtn,
             flashcardsBtn,
             logoutBtn
-
         );
         leftPane.setPadding(new Insets(10));
 
         VBox rightPane = new VBox(20, upcomingLabel, eventBox, openCalendar);
         rightPane.setPadding(new Insets(10));
 
+        root.setTop(topBar);
         root.setLeft(leftPane);
         root.setRight(rightPane);
+
+        applyTheme(root);
 
         Scene scene = new Scene(root, 900, 600);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+
+    private static void applyTheme(Pane root) {
+        if (darkMode) {
+            root.setStyle("-fx-background-color: #121212;");
+            setNodeTextColor(root, "-fx-text-fill: white;");
+            setButtonStyle(root, "-fx-background-color: #333333; -fx-text-fill: white;");
+            setComboBoxStyle(root, "-fx-background-color: #333333; -fx-text-fill: white;");
+            setToggleButtonStyle(root, "-fx-background-color: #333333; -fx-text-fill: white;");
+        } else {
+            root.setStyle("-fx-background-color: white;");
+            setNodeTextColor(root, "-fx-text-fill: black;");
+            setButtonStyle(root, "-fx-background-color: lightgray; -fx-text-fill: black;");
+            setComboBoxStyle(root, "-fx-background-color: white; -fx-text-fill: black;");
+            setToggleButtonStyle(root, "-fx-background-color: lightgray; -fx-text-fill: black;");
+        }
+    }
+
+    private static void setNodeTextColor(Pane root, String style) {
+        root.lookupAll(".label").forEach(node -> node.setStyle(style));
+    }
+
+    private static void setButtonStyle(Pane root, String style) {
+        root.lookupAll(".button").forEach(node -> {
+            if (!(node instanceof Button) || !"Logout".equals(((Button) node).getText())) {
+                node.setStyle(style);
+            }
+        });
+    }
+
+    private static void setComboBoxStyle(Pane root, String style) {
+        root.lookupAll(".combo-box").forEach(node -> node.setStyle(style));
+    }
+
+    private static void setToggleButtonStyle(Pane root, String style) {
+        root.lookupAll(".toggle-button").forEach(node -> node.setStyle(style));
     }
 }
