@@ -1,17 +1,13 @@
 import java.io.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.HashMap;
 import javafx.application.Application;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class Login {
@@ -24,76 +20,48 @@ public class Login {
     public Login(Stage primaryStage, Main mainApp) {
         this.primaryStage = primaryStage;
         this.mainApp = mainApp;
-
-        try {
-            FileInputStream input = new FileInputStream("logo.png");
-            Image image = new Image(input);
-            //Setting the image view
-            ImageView imageView = new ImageView(image);
-            //Setting the position of the image
-            imageView.setX(1);
-            imageView.setY(1);
-            //setting the fit height and width of the image view
-            imageView.setFitHeight(30);
-            imageView.setFitWidth(30);
-            //Setting the preserve ratio of the image view
-            imageView.setPreserveRatio(true);
-            //Creating a Group object
-            Group root = new Group(imageView);
-           
-        } catch (FileNotFoundException e) {
-            System.err.println("Error: Image file not found: " + e.getMessage());
-        }
-        
     }
 
     public void showLoginWindow() {
         primaryStage.setTitle("Login");
-        VBox loginLayout = new VBox(10);
-        loginLayout.setPadding(new Insets(200));
 
-        // Load the image for the logo
-        FileInputStream input;
+        VBox loginLayout = new VBox(15);
+        loginLayout.setPadding(new Insets(100));
+        loginLayout.setStyle("-fx-background-color: #f4f4f4;");
+        loginLayout.setPrefWidth(400);
+        loginLayout.setPrefHeight(600);
+
+        // Logo
         ImageView imageView = null;
         try {
-            input = new FileInputStream("logo.png");
+            FileInputStream input = new FileInputStream("logo.png");
             Image image = new Image(input);
             imageView = new ImageView(image);
-            imageView.setFitHeight(70);
-            imageView.setFitWidth(70);
+            imageView.setFitHeight(100);
             imageView.setPreserveRatio(true);
         } catch (FileNotFoundException e) {
-            System.err.println("Error: Image file not found: " + e.getMessage());
+            System.err.println("Error: Logo not found.");
         }
 
-        // Create a HBox to align the logo on the left
-        HBox logoContainer = new HBox();
-        logoContainer.setPadding(new Insets(10)); // Add some padding
-        logoContainer.getChildren().add(imageView);
+        Label titleLabel = new Label("Welcome Back");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
-        // Username and password fields
         TextField userField = new TextField();
-        PasswordField passField = new PasswordField();
-        TextField passTextField = new TextField();
+        userField.setPromptText("Username");
+        userField.setMaxWidth(300);
 
+        PasswordField passField = new PasswordField();
+        passField.setPromptText("Password");
+        TextField passTextField = new TextField();
+        passTextField.setPromptText("Password");
         passTextField.setVisible(false);
 
-        passField.setPrefWidth(800);
-        passTextField.setPrefWidth(800);
+        StackPane passwordStack = new StackPane(passField, passTextField);
+        passwordStack.setMaxWidth(300);
 
-        StackPane passwordStack = new StackPane();
-        passwordStack.setPrefWidth(800);
-        passwordStack.getChildren().addAll(passField, passTextField);
+        CheckBox showPasswordBox = new CheckBox("Show Password");
+        showPasswordBox.setStyle("-fx-font-size: 12px;");
 
-        CheckBox showPasswordBox = new CheckBox("o");
-        showPasswordBox.setStyle("-fx-font-size: 14px;");
-
-        HBox passwordBox = new HBox(5, passwordStack, showPasswordBox);
-
-        Button loginButton = new Button("Login");
-        Button registerButton = new Button("Register");
-
-        // Toggle password visibility
         showPasswordBox.setOnAction(e -> {
             if (showPasswordBox.isSelected()) {
                 passTextField.setText(passField.getText());
@@ -106,17 +74,16 @@ public class Login {
             }
         });
 
-        loginLayout.getChildren().addAll(
-            logoContainer, // Add the logo container here
-            new Label("Username:"), userField,
-            new Label("Password:"), passwordBox, loginButton, registerButton
-        );
+        Button loginButton = new Button("Login");
+        Button registerButton = new Button("Register");
+
+        loginButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+        registerButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
 
         loginButton.setOnAction(e -> {
             this.username = userField.getText();
             this.password = passField.getText();
 
-            File saveFile = new File("accounts.txt");
             try {
                 Accounts account = Accounts.load(username);
                 if (account != null && account.getPassword().equals(password)) {
@@ -134,90 +101,85 @@ public class Login {
 
         registerButton.setOnAction(e -> showRegisterWindow());
 
-        primaryStage.setScene(new Scene(loginLayout));
-        primaryStage.setMaximized(true);
+        loginLayout.setAlignment(javafx.geometry.Pos.CENTER);
+        loginLayout.getChildren().addAll(
+            imageView, titleLabel,
+            userField, passwordStack,
+            showPasswordBox,
+            loginButton, registerButton
+        );
+
+        primaryStage.setScene(new Scene(loginLayout, 500, 700));
         primaryStage.show();
     }
 
     public void showRegisterWindow() {
         primaryStage.setTitle("Register");
-        VBox registerLayout = new VBox(10);
-        registerLayout.setPadding(new Insets(200));
+
+        VBox registerLayout = new VBox(15);
+        registerLayout.setPadding(new Insets(100));
+        registerLayout.setStyle("-fx-background-color: #f4f4f4;");
+        registerLayout.setPrefWidth(400);
+        registerLayout.setPrefHeight(700);
+
+        Label titleLabel = new Label("Create Account");
+        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
 
         TextField userField = new TextField();
+        userField.setPromptText("Username");
+        userField.setMaxWidth(300);
+
         TextField emailField = new TextField();
+        emailField.setPromptText("Email");
+        emailField.setMaxWidth(300);
 
-        PasswordField passField = new PasswordField();
-        TextField passTextField = new TextField();
-        passTextField.setVisible(false);
-
-        passField.setPrefWidth(2000);
-        passTextField.setPrefWidth(2000);
-
-        StackPane passwordStack = new StackPane();
-        passwordStack.setPrefWidth(2000);
-        passwordStack.getChildren().addAll(passField, passTextField);
-
-        CheckBox showPasswordBox = new CheckBox("o");
-        showPasswordBox.setStyle("-fx-font-size: 14px;");
-
-        HBox passwordBox = new HBox(5, passwordStack, showPasswordBox);
-
-        Button loginButton = new Button("Login");
-        Button registerButton = new Button("Register");
-
-        Label emailErrorLabel = new Label("Enter valid email");
-        emailErrorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 10px;");
+        Label emailErrorLabel = new Label("Enter a valid email address");
+        emailErrorLabel.setStyle("-fx-text-fill: red; -fx-font-size: 12px;");
         emailErrorLabel.setVisible(false);
 
-        // Initially disable register button
-        registerButton.setDisable(true);
+        PasswordField passField = new PasswordField();
+        passField.setPromptText("Password");
+        TextField passTextField = new TextField();
+        passTextField.setPromptText("Password");
+        passTextField.setVisible(false);
 
-        // Function to check if all required fields are non-empty
+        StackPane passwordStack = new StackPane(passField, passTextField);
+        passwordStack.setMaxWidth(300);
 
+        CheckBox showPasswordBox = new CheckBox("Show Password");
 
-        // Add email validation listener
-        emailField.textProperty().addListener((observable, oldValue, newValue) -> {
-            validateRegistration(userField.getText(), newValue, passField.getText(), registerButton);
-            if (newValue.contains("@") && (newValue.contains(".C")||newValue.contains(".c"))) {
-                emailField.setStyle("-fx-text-box-border: #cccccc; -fx-focus-color: #0093ff;");
-                emailErrorLabel.setVisible(false);
-
-            } else {
-                emailField.setStyle("-fx-text-box-border: red; -fx-focus-color: red;");
-                emailErrorLabel.setVisible(true);
-                registerButton.setDisable(true);
-            }
-        });
-
-        userField.textProperty().addListener((observable, oldValue, newValue) -> {
-            validateRegistration(newValue, emailField.getText(), passField.getText(), registerButton);
-        });
-
-        passField.textProperty().addListener((observable, oldValue, newValue) -> {
-            validateRegistration(userField.getText(), emailField.getText(), newValue, registerButton);
-        });
-
-        // Toggle password visibility
         showPasswordBox.setOnAction(e -> {
             if (showPasswordBox.isSelected()) {
                 passTextField.setText(passField.getText());
                 passTextField.setVisible(true);
                 passField.setVisible(false);
-                validateRegistration(userField.getText(), emailField.getText(), passTextField.getText(), registerButton);
             } else {
                 passField.setText(passTextField.getText());
                 passField.setVisible(true);
                 passTextField.setVisible(false);
-                validateRegistration(userField.getText(), emailField.getText(), passField.getText(), registerButton);
             }
         });
 
-        registerLayout.getChildren().addAll(
-            new Label("Username:"), userField,
-            new Label("Email:"), emailField, emailErrorLabel,
-            new Label("Password:"), passwordBox,
-            registerButton, loginButton
+        Button registerButton = new Button("Register");
+        Button loginButton = new Button("Back to Login");
+
+        registerButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+        loginButton.setStyle("-fx-font-size: 14px; -fx-padding: 8px 16px;");
+        registerButton.setDisable(true);
+
+        emailField.textProperty().addListener((obs, oldText, newText) -> {
+            validateRegistration(userField.getText(), newText, passField.getText(), registerButton);
+            boolean valid = isValidEmail(newText);
+            emailErrorLabel.setVisible(!valid);
+            emailField.setStyle(valid ? "" : "-fx-border-color: red;");
+        });
+
+        userField.textProperty().addListener((obs, oldText, newText) ->
+            validateRegistration(newText, emailField.getText(), passField.getText(), registerButton)
+        );
+
+        passField.textProperty().addListener((obs, oldText, newText) ->
+            validateRegistration(userField.getText(), emailField.getText(), newText, registerButton)
         );
 
         registerButton.setOnAction(e -> {
@@ -225,41 +187,44 @@ public class Login {
             this.email = emailField.getText();
             this.password = passField.getText();
 
-            File saveFile = new File("accounts.txt");
             try {
                 Accounts testAccount = Accounts.load(username);
-                if (testAccount != null) {
-                    if (email.equals(testAccount.getEmail())) {
-                        showAlert("Email already in use.");
-                    }
+                if (testAccount != null && email.equals(testAccount.getEmail())) {
+                    showAlert("Email already in use.");
                 } else {
                     Accounts account = new Accounts(username, email, password);
                     Accounts.save(account);
-                    showAlert("Account creation successful!");
+                    showAlert("Account created successfully!");
                     mainApp.homePage();
                 }
             } catch (Exception ex) {
-                showAlert("Error loading account");
+                showAlert("Error saving account.");
                 ex.printStackTrace();
             }
         });
 
         loginButton.setOnAction(e -> showLoginWindow());
 
-        primaryStage.setScene(new Scene(registerLayout));
-        primaryStage.setMaximized(true);
+        registerLayout.setAlignment(javafx.geometry.Pos.CENTER);
+        registerLayout.getChildren().addAll(
+            titleLabel,
+            userField, emailField, emailErrorLabel,
+            passwordStack, showPasswordBox,
+            registerButton, loginButton
+        );
+
+        primaryStage.setScene(new Scene(registerLayout, 500, 750));
         primaryStage.show();
     }
 
     private void validateRegistration(String username, String email, String password, Button registerButton) {
         boolean isUsernameEmpty = username == null || username.trim().isEmpty();
         boolean isPasswordEmpty = password == null || password.trim().isEmpty();
-
         registerButton.setDisable(isUsernameEmpty || isPasswordEmpty || !isValidEmail(email));
     }
 
     private boolean isValidEmail(String email) {
-        return email != null && email.contains("@") && (email.contains(".C") || email.contains(".c"));
+        return email != null && email.contains("@") && (email.contains(".c") || email.contains(".C"));
     }
 
     private void showAlert(String message) {
@@ -270,9 +235,7 @@ public class Login {
         alert.showAndWait();
     }
 
-    public static String getName() {return username;}
-
-    public static String getPassword() {return password;}
-
-    public static String getEmail() {return email;}
+    public static String getName() { return username; }
+    public static String getPassword() { return password; }
+    public static String getEmail() { return email; }
 }
