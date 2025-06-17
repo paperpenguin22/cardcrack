@@ -1,25 +1,28 @@
-Matthew
+matt
 mwill2@ocdsb.ca
-1233
+1
+Points:0
 Friends:
+elu3@ocdsb.ca
 EndFriends
 FriendRequests:
 EndFriendRequests
 FriendRequestsSent:
-elu3@ocdsb.ca|
 EndFriendRequestsSent
+CalendarEvents:
+EndCalendarEvents
 exit
 Emory
 elu3@ocdsb.ca
 1234
+Points:0
 Friends:
+mwill2@ocdsb.ca
 EndFriends
 FriendRequests:
 EndFriendRequests
 FriendRequestsSent:
-a|
-mwill2@ocdsb.ca|
 EndFriendRequestsSent
-Test: French|3|Test|BSKBDKJSD|2025-06-02
-Test: Math|1|Test|hello|2025-06-01
+CalendarEvents:
+EndCalendarEvents
 exit

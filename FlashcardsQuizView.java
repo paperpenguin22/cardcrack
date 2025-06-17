@@ -1,112 +1,152 @@
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
 
 public class FlashcardsQuizView {
+
     public static void open(Stage stage, Accounts account, Main mainApp) {
         VBox root = new VBox(10);
         root.setPadding(new javafx.geometry.Insets(10));
-
-        Label title = new Label("Select Subject for Flashcards");
+        Label title = new Label("Select Subject");
         ListView<String> subjectsList = new ListView<>();
 
-        for (String subject : account.getSubjects().keySet()) {
-            subjectsList.getItems().add(subject);
-        }
-
-        root.getChildren().addAll(title, subjectsList);
-
-        subjectsList.setOnMouseClicked(event -> {
-            String selectedSubject = subjectsList.getSelectionModel().getSelectedItem();
-            if (selectedSubject != null) {
-                showUnits(stage, account, mainApp, selectedSubject);
-            }
+        subjectsList.getItems().addAll(account.getSubjects().keySet());
+        subjectsList.setOnMouseClicked(e -> {
+            String subject = subjectsList.getSelectionModel().getSelectedItem();
+            if (subject != null) showUnits(stage, account, mainApp, subject);
         });
 
-        Button backButton = new Button("Back to Homepage");
-        backButton.setOnAction(e -> mainApp.homePage());
-        root.getChildren().add(backButton);
+        Button addButton = new Button("Add Question");
+        addButton.setOnAction(e -> showAddForm(stage, account, mainApp));
 
+        Button back = new Button("Back");
+        back.setOnAction(e -> mainApp.homePage());
+
+        root.getChildren().addAll(title, subjectsList, addButton, back);
         stage.setScene(new Scene(root, 400, 400));
-        stage.setTitle("Flashcards & Quiz");
+        stage.setTitle("Flashcards");
         stage.show();
     }
 
     private static void showUnits(Stage stage, Accounts account, Main mainApp, String subject) {
         VBox root = new VBox(10);
         root.setPadding(new javafx.geometry.Insets(10));
-
-        Label title = new Label("Select Unit in " + subject);
-        ListView<String> unitsList = new ListView<>();
-
-        Map<String, List<String>> units = account.getSubjects().get(subject);
-        if (units != null) {
-            unitsList.getItems().addAll(units.keySet());
-        }
-
-        root.getChildren().addAll(title, unitsList);
-
-        unitsList.setOnMouseClicked(event -> {
-            String selectedUnit = unitsList.getSelectionModel().getSelectedItem();
-            if (selectedUnit != null) {
-                startFlashcards(stage, account, mainApp, subject, selectedUnit);
-            }
+        Label label = new Label("Select Unit in " + subject);
+        ListView<String> unitList = new ListView<>(javafx.collections.FXCollections.observableArrayList(account.getSubjects().get(subject).keySet()));
+        unitList.setOnMouseClicked(e -> {
+            String unit = unitList.getSelectionModel().getSelectedItem();
+            if (unit != null) startQuiz(stage, account, mainApp, subject, unit);
         });
 
-        Button backButton = new Button("Back to Subjects");
-        backButton.setOnAction(e -> open(stage, account, mainApp));
-        root.getChildren().add(backButton);
+        Button back = new Button("Back");
+        back.setOnAction(e -> open(stage, account, mainApp));
 
+        root.getChildren().addAll(label, unitList, back);
         stage.setScene(new Scene(root, 400, 400));
         stage.setTitle("Units");
         stage.show();
     }
 
-    private static void startFlashcards(Stage stage, Accounts account, Main mainApp, String subject, String unit) {
-        VBox root = new VBox(10);
-        root.setPadding(new javafx.geometry.Insets(10));
-
-        List<String> questions = account.getSubjects().get(subject).get(unit);
-        if (questions == null || questions.isEmpty()) {
-            root.getChildren().add(new Label("No questions found for " + subject + " > " + unit));
-            Button backButton = new Button("Back to Units");
-            backButton.setOnAction(e -> showUnits(stage, account, mainApp, subject));
-            root.getChildren().add(backButton);
-
-            stage.setScene(new Scene(root, 400, 300));
-            stage.setTitle("Flashcards");
+    private static void startQuiz(Stage stage, Accounts account, Main mainApp, String subject, String unit) {
+        List<String> qaList = new ArrayList<>(account.getSubjects().get(subject).get(unit));
+        if (qaList == null || qaList.isEmpty()) {
+            VBox root = new VBox(10, new Label("No questions in this unit."), new Button("Back"));
+            ((Button) root.getChildren().get(1)).setOnAction(e -> showUnits(stage, account, mainApp, subject));
+            root.setPadding(new javafx.geometry.Insets(10));
+            stage.setScene(new Scene(root, 400, 200));
             stage.show();
             return;
         }
 
-        Label questionLabel = new Label();
-        Button nextButton = new Button("Next Question");
-        final int[] index = {0};
+        Collections.shuffle(qaList);
+        Iterator<String> iter = qaList.iterator();
+        VBox root = new VBox(10);
+        root.setPadding(new javafx.geometry.Insets(10));
+        Label qLabel = new Label();
+        TextField input = new TextField();
+        Label feedback = new Label();
+        Button submit = new Button("Submit");
 
-        questionLabel.setText(questions.get(index[0]));
+        final long[] start = {System.currentTimeMillis()};
+        final String[] currentQA = {iter.next()};
+        qLabel.setText("Q: " + currentQA[0].split("\\|")[0]);
 
-        nextButton.setOnAction(e -> {
-            index[0]++;
-            if (index[0] >= questions.size()) {
-                index[0] = 0; // Loop back to start
+        submit.setOnAction(e -> {
+            long elapsed = System.currentTimeMillis() - start[0];
+            String userAnswer = input.getText().trim();
+            String actualAnswer = currentQA[0].split("\\|").length > 1 ? currentQA[0].split("\\|")[1] : "";
+
+            if (userAnswer.equalsIgnoreCase(actualAnswer)) {
+                int score = Math.max(1, 10 - (int) (elapsed / 1000));
+                int bonus = new Random().nextInt(5) + score;
+                account.addPoints(bonus);
+                feedback.setText("Correct! +" + bonus + " points. Total: " + account.getPoints());
+
+                // Save account after adding points
+                try {
+                    Accounts.save(account);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    feedback.setText("Error saving points.");
+                }
+            } else {
+                feedback.setText("Wrong. Correct answer: " + actualAnswer);
             }
-            questionLabel.setText(questions.get(index[0]));
+
+            if (iter.hasNext()) {
+                currentQA[0] = iter.next();
+                qLabel.setText("Q: " + currentQA[0].split("\\|")[0]);
+                input.clear();
+                start[0] = System.currentTimeMillis();
+            } else {
+                submit.setDisable(true);
+            }
         });
 
-        root.getChildren().addAll(questionLabel, nextButton);
+        Button back = new Button("Back");
+        back.setOnAction(e -> showUnits(stage, account, mainApp, subject));
 
-        Button backButton = new Button("Back to Units");
-        backButton.setOnAction(e -> showUnits(stage, account, mainApp, subject));
-        root.getChildren().add(backButton);
-
+        root.getChildren().addAll(qLabel, input, submit, feedback, back);
         stage.setScene(new Scene(root, 400, 300));
-        stage.setTitle("Flashcards");
+        stage.setTitle("Quiz: " + subject + " - " + unit);
+        stage.show();
+    }
+
+    private static void showAddForm(Stage stage, Accounts account, Main mainApp) {
+        VBox root = new VBox(10);
+        root.setPadding(new javafx.geometry.Insets(10));
+        TextField subject = new TextField();
+        subject.setPromptText("Subject");
+        TextField unit = new TextField();
+        unit.setPromptText("Unit");
+        TextField question = new TextField();
+        question.setPromptText("Question");
+        TextField answer = new TextField();
+        answer.setPromptText("Answer");
+
+        Button submit = new Button("Add");
+        Label status = new Label();
+
+        submit.setOnAction(e -> {
+            if (!subject.getText().isEmpty() && !unit.getText().isEmpty() &&
+                !question.getText().isEmpty() && !answer.getText().isEmpty()) {
+                account.addQuestion(subject.getText().trim(), unit.getText().trim(), question.getText().trim(), answer.getText().trim());
+                status.setText("Added successfully!");
+            } else {
+                status.setText("Fill all fields!");
+            }
+        });
+
+        Button back = new Button("Back");
+        back.setOnAction(e -> open(stage, account, mainApp));
+
+        root.getChildren().addAll(new Label("Add Flashcard:"), subject, unit, question, answer, submit, status, back);
+        stage.setScene(new Scene(root, 400, 400));
+        stage.setTitle("Add Question");
         stage.show();
     }
 }

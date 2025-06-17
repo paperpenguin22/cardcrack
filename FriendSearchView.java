@@ -5,8 +5,11 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FriendSearchView {
+
     public static void open(Stage stage, Accounts account, Main mainApp) {
         VBox root = new VBox(10);
         root.setPadding(new Insets(10));
@@ -14,6 +17,7 @@ public class FriendSearchView {
         Label title = new Label("Friend Search Page");
         root.getChildren().add(title);
 
+        // --- Friend Search Box ---
         HBox searchBox = new HBox(10);
         Label emailLabel = new Label("Friend Email:");
         TextField emailField = new TextField();
@@ -41,7 +45,7 @@ public class FriendSearchView {
                 return;
             }
 
-            // Load the account to check if it exists
+            // Load the recipient's account
             Accounts targetAccount;
             try {
                 targetAccount = Accounts.load(emailToSend);
@@ -55,14 +59,20 @@ public class FriendSearchView {
                 return;
             }
 
-            // Add friend request sent for this account
-            account.addFriendRequestSent(emailToSend, ""); // no name
+            // Add friend request to sender's sent list
+            account.addFriendRequestSent(emailToSend, ""); // Optional name
+
+            // Add friend request to recipient's inbox
+            targetAccount.addFriendRequest(account.getEmail(), account.getName());
+
             try {
-                Accounts.save(account);
+                Accounts.save(account);        // Save sender
+                Accounts.save(targetAccount);  // Save recipient
                 messageLabel.setStyle("-fx-text-fill: green;");
                 messageLabel.setText("Friend request sent to " + emailToSend);
             } catch (Exception ex) {
                 ex.printStackTrace();
+                messageLabel.setStyle("-fx-text-fill: red;");
                 messageLabel.setText("Failed to send friend request.");
             }
         });
@@ -70,11 +80,63 @@ public class FriendSearchView {
         searchBox.getChildren().addAll(emailLabel, emailField, searchBtn);
         root.getChildren().addAll(searchBox, messageLabel);
 
+        // --- Current Friends List ---
+        Label friendsLabel = new Label("Your Current Friends (Click to Unfriend):");
+        root.getChildren().add(friendsLabel);
+
+        VBox friendsBox = new VBox(5);
+        List<String> friendEmails = new ArrayList<>(account.getFriends());
+
+        if (friendEmails.isEmpty()) {
+            friendsBox.getChildren().add(new Label("You have no friends."));
+        } else {
+            for (String friendEmail : friendEmails) {
+                Button friendBtn = new Button(friendEmail);
+                friendBtn.setMaxWidth(Double.MAX_VALUE);
+                friendBtn.setOnAction(e -> {
+                    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirm.setTitle("Unfriend Confirmation");
+                    confirm.setHeaderText(null);
+                    confirm.setContentText("Are you sure you want to unfriend " + friendEmail + "?");
+                    confirm.showAndWait().ifPresent(response -> {
+                        if (response == ButtonType.OK) {
+                            try {
+                                Accounts friendAccount = Accounts.load(friendEmail);
+                                if (friendAccount == null) {
+                                    messageLabel.setStyle("-fx-text-fill: red;");
+                                    messageLabel.setText("Friend account not found.");
+                                    return;
+                                }
+
+                                account.removeFriend(friendEmail);
+                                friendAccount.removeFriend(account.getEmail());
+
+                                Accounts.save(account);
+                                Accounts.save(friendAccount);
+
+                                messageLabel.setStyle("-fx-text-fill: green;");
+                                messageLabel.setText("You have unfriended " + friendEmail);
+
+                                open(stage, account, mainApp);
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                                messageLabel.setStyle("-fx-text-fill: red;");
+                                messageLabel.setText("Error unfriending user.");
+                            }
+                        }
+                    });
+                });
+                friendsBox.getChildren().add(friendBtn);
+            }
+        }
+        root.getChildren().add(friendsBox);
+
+        // Back button
         Button backButton = new Button("Back to Homepage");
         backButton.setOnAction(e -> mainApp.homePage());
         root.getChildren().add(backButton);
 
-        stage.setScene(new Scene(root, 450, 200));
+        stage.setScene(new Scene(root, 450, 600));
         stage.setTitle("Find Friends");
         stage.show();
     }
