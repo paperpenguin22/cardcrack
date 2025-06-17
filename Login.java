@@ -14,8 +14,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-
-
 public class Login {
     private final Stage primaryStage;
     private final Main mainApp;
@@ -58,7 +56,7 @@ public class Login {
         FileInputStream input;
         ImageView imageView = null;
         try {
-            input = new FileInputStream("unnamed.png");
+            input = new FileInputStream("logo.png");
             Image image = new Image(input);
             imageView = new ImageView(image);
             imageView.setFitHeight(70);
@@ -120,7 +118,7 @@ public class Login {
 
             File saveFile = new File("accounts.txt");
             try {
-                Accounts account = Accounts.load(username, saveFile);
+                Accounts account = Accounts.load(username);
                 if (account != null && account.getPassword().equals(password)) {
                     this.email = account.getEmail();
                     showAlert("Login successful!");
@@ -229,7 +227,7 @@ public class Login {
 
             File saveFile = new File("accounts.txt");
             try {
-                Accounts testAccount = Accounts.load(username, saveFile);
+                Accounts testAccount = Accounts.load(username);
                 if (testAccount != null) {
                     if (email.equals(testAccount.getEmail())) {
                         showAlert("Email already in use.");

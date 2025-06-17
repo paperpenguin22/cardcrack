@@ -1,6 +1,24 @@
 Emory
 elu3@ocdsb.ca
 1234
-Test: English|2|Assaignment|bye|2025-06-02
+Friends:
+EndFriends
+FriendRequests:
+EndFriendRequests
+FriendRequestsSent:
+a|
+EndFriendRequestsSent
+Test: French|3|Test|BSKBDKJSD|2025-06-02
 Test: Math|1|Test|hello|2025-06-01
+exit
+Matthew
+mwill2@ocdsb.ca
+123abc
+Friends:
+EndFriends
+FriendRequests:
+EndFriendRequests
+FriendRequestsSent:
+elu3@ocdsb.ca|
+EndFriendRequestsSent
 exit

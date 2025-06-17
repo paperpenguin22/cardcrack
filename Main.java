@@ -1,89 +1,154 @@
-import java.io.*;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.layout.BorderPane;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.ZoneId;
+
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
 
 public class Main extends Application {
-    private Stage primaryStage;
-    
-    @Override
-    public void start(Stage primaryStage) {
-        this.primaryStage = primaryStage;
-        primaryStage.setTitle("Login");
-        Login loginApp = new Login(primaryStage, this);
-        loginApp.showLoginWindow();
-    }
+    public static Stage primaryStage;  // global stage
+    public static Accounts account;    // currently logged in account
+    private static Login loginInstance; // keep a reference to login instance for username retrieval
 
     public static void main(String[] args) {
         launch(args);
     }
 
-    public void homePage(){
-        primaryStage.setTitle("Home Page");
+    @Override
+    public void start(Stage stage) {
+        primaryStage = stage;
+        showLogin(); // start with login screen
+    }
 
-        BorderPane homeLayout = new BorderPane();
-        homeLayout.setPadding(new Insets(20));
+    // Show the login screen
+    public static void showLogin() {
+        loginInstance = new Login(primaryStage, new Main());
+        loginInstance.showLoginWindow();
+    }
 
-        HBox topBar = new HBox(10);
-        topBar.setPadding(new Insets(10));
+    // Called after successful login/registration
+    public static void homePage() {
+        if (primaryStage == null) {
+            System.err.println("Error: primaryStage is null.");
+            return;
+        }
 
-        Label searchLabel = new Label("Search:");
-        TextField searchField = new TextField();
-        Button calendarButton = new Button("Calendar");
-
-        Label clockLabel = new Label();
-        clockLabel.setStyle("-fx-background-color: #d3d3d3; " +"-fx-border-color: #555555; " + "-fx-border-width: 1.5; " +"-fx-padding: 4 8 4 8; " +"-fx-border-radius: 6; " +"-fx-background-radius: 6;");
-        updateClock(clockLabel); // Initialize the clock
-        Timeline clockTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> updateClock(clockLabel)));
-        clockTimeline.setCycleCount(Timeline.INDEFINITE);
-        clockTimeline.play();
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        
-        topBar.getChildren().addAll(searchLabel, searchField, spacer, clockLabel);
-
-        homeLayout.setTop(topBar);
-        homeLayout.setBottom(calendarButton);
-
-        calendarButton.setOnAction(e -> {
-            try {
-                File saveFile = new File("accounts.txt");
-                Accounts account = Accounts.load(Login.getName(), saveFile);
-
-                if (account != null) {
-                    Calendar calendarView = new Calendar(primaryStage, account);
-                    Calendar.calendar(); // This probably needs to use the account or eventMap inside the class
-                } else {
-                    System.err.println("Account not found or failed to load.");
-                }
-            } catch (IOException ex) {
-                ex.printStackTrace();
+        // Load latest account info using username from login instance
+        String username = loginInstance.getName();
+        try {
+            account = Accounts.load(username);
+            if (account == null) {
+                System.err.println("Error: Account not found for user: " + username);
+                showLogin();
+                return;
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            showLogin();
+            return;
+        }
+
+        primaryStage.setTitle("Study App Home");
+
+        BorderPane root = new BorderPane();
+        root.setPadding(new Insets(20));
+
+        // Right pane with upcoming events and calendar button
+        Label upcomingLabel = new Label("Upcoming Events:");
+        VBox eventBox = new VBox(10);
+
+        Map<LocalDate, List<CalendarEvent>> calendar = account.getCalendar();
+        if (calendar != null && !calendar.isEmpty()) {
+            List<LocalDate> sortedDates = new ArrayList<>(calendar.keySet());
+            Collections.sort(sortedDates);
+
+            for (LocalDate date : sortedDates) {
+                List<CalendarEvent> events = calendar.get(date);
+                if (events != null) {
+                    for (CalendarEvent event : events) {
+                        Label eventLabel = new Label(
+                            date + " - " + event.getSubject() + " (Unit: " + event.getUnit() + ") [" +
+                            event.getType() + "]: " + event.getDescription()
+                        );
+
+                        Button jumpToDateBtn = new Button("Go to Day");
+                        LocalDate selectedDate = date;  // needed for lambda capture
+                        jumpToDateBtn.setOnAction(e -> {
+                            Calendar calView = new Calendar(primaryStage, account);
+                            calView.showCalendarForDate(selectedDate); // updated method name
+                        });
+
+                        HBox box = new HBox(10, eventLabel, jumpToDateBtn);
+                        box.setPadding(new Insets(5));
+                        eventBox.getChildren().add(box);
+                    }
+                }
+            }
+        } else {
+            eventBox.getChildren().add(new Label("No upcoming events."));
+        }
+
+        Button openCalendar = new Button("Open Calendar");
+        openCalendar.setOnAction(e -> {
+            Calendar calView = new Calendar(primaryStage, account);
+            calView.showCalendar(); // updated method name
         });
 
-        primaryStage.setScene(new Scene(homeLayout));
-        primaryStage.setMaximized(true);
+        // Left pane with buttons for friend requests, friend search, leaderboard, subjects, flashcards
+        Button friendRequestsBtn = new Button("Friend Requests");
+        friendRequestsBtn.setOnAction(e -> {
+            FriendRequestsView.open(primaryStage, account, new Main());
+        });
+
+        Button friendSearchBtn = new Button("Search Friends");
+        friendSearchBtn.setOnAction(e -> {
+            FriendSearchView.open(primaryStage, account, new Main());
+        });
+
+        Button leaderboardBtn = new Button("Leaderboard");
+        leaderboardBtn.setOnAction(e -> {
+            LeaderboardView.open(primaryStage, account, new Main());
+        });
+
+        Button subjectsBtn = new Button("Subjects");
+        subjectsBtn.setOnAction(e -> {
+            SubjectsView.open(primaryStage, account, new Main());
+        });
+
+        Button flashcardsBtn = new Button("Flashcards / Quiz");
+        flashcardsBtn.setOnAction(e -> {
+            FlashcardsQuizView.open(primaryStage, account, new Main());
+        });
+
+        Button logoutBtn = new Button("Logout");
+        logoutBtn.setOnAction(e -> {
+            account = null;
+            showLogin();
+        });
+        
+        VBox leftPane = new VBox(15,
+            friendRequestsBtn,
+            friendSearchBtn,
+            leaderboardBtn,
+            subjectsBtn,
+            flashcardsBtn,
+            logoutBtn
+
+        );
+        leftPane.setPadding(new Insets(10));
+
+        VBox rightPane = new VBox(20, upcomingLabel, eventBox, openCalendar);
+        rightPane.setPadding(new Insets(10));
+
+        root.setLeft(leftPane);
+        root.setRight(rightPane);
+
+        Scene scene = new Scene(root, 900, 600);
+        primaryStage.setScene(scene);
         primaryStage.show();
     }
-    private void updateClock(Label clockLabel) {
-        ZoneId zoneId = ZoneId.of("America/Toronto"); // Time zone for Ottawa
-        ZonedDateTime now = ZonedDateTime.now(zoneId);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm z \nMMM.dd.yyyy");
-        
-        clockLabel.setText(now.format(formatter));
-    }
-    
 }
