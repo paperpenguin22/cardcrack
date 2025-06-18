@@ -28,24 +28,27 @@ public class FriendSearchView {
 
         searchBtn.setOnAction(e -> {
             String emailToSend = emailField.getText().trim().toLowerCase();
+
             if (emailToSend.isEmpty()) {
                 messageLabel.setText("Please enter an email.");
                 return;
             }
+
             if (emailToSend.equals(account.getEmail())) {
-                messageLabel.setText("You cannot friend yourself.");
+                messageLabel.setText("You cannot send a friend request to yourself.");
                 return;
             }
+
             if (account.getFriends().contains(emailToSend)) {
                 messageLabel.setText("This user is already your friend.");
                 return;
             }
+
             if (account.hasFriendRequestSentTo(emailToSend)) {
                 messageLabel.setText("You have already sent a friend request to this user.");
                 return;
             }
 
-            // Load the recipient's account
             Accounts targetAccount;
             try {
                 targetAccount = Accounts.load(emailToSend);
@@ -60,7 +63,7 @@ public class FriendSearchView {
             }
 
             // Add friend request to sender's sent list
-            account.addFriendRequestSent(emailToSend, ""); // Optional name
+            account.addFriendRequestSent(emailToSend, "");
 
             // Add friend request to recipient's inbox
             targetAccount.addFriendRequest(account.getEmail(), account.getName());
@@ -117,7 +120,7 @@ public class FriendSearchView {
                                 messageLabel.setStyle("-fx-text-fill: green;");
                                 messageLabel.setText("You have unfriended " + friendEmail);
 
-                                open(stage, account, mainApp);
+                                open(stage, account, mainApp); // Refresh view
                             } catch (IOException ex) {
                                 ex.printStackTrace();
                                 messageLabel.setStyle("-fx-text-fill: red;");

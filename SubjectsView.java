@@ -81,7 +81,12 @@ public class SubjectsView {
 
         List<String> questions = account.getSubjects().get(subject).get(unit);
         if (questions != null) {
-            questionsList.getItems().addAll(questions);
+            for (String qa : questions) {
+                String[] parts = qa.split("\\|");
+                String q = parts.length > 0 ? parts[0] : "Unknown Question";
+                String a = parts.length > 1 ? parts[1] : "No Answer";
+                questionsList.getItems().add("Question: \"" + q + "\"  Answer: \"" + a + "\"");
+            }
         }
 
         root.getChildren().addAll(title, questionsList);

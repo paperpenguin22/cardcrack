@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.DayOfWeek;
 import java.util.*;
 
 public class Calendar {
@@ -14,72 +15,134 @@ public class Calendar {
     private Accounts account;
     private Map<LocalDate, List<CalendarEvent>> eventMap;
     private YearMonth currentMonth;
+    private GridPane calendarGrid;
+    private Label monthLabel;
 
-    public Calendar(Stage stage, Accounts account) {
+    // Constructor takes Stage and username to load the account
+    public Calendar(Stage stage, String username) {
         this.stage = stage;
-        this.account = account;
-        this.eventMap = account.getCalendar();
-        this.currentMonth = YearMonth.now();
+        try {
+            this.account = Accounts.load(username);
+            this.eventMap = account.getCalendar();
+        } catch (Exception e) {
+            e.printStackTrace();
+            this.account = null;
+            this.eventMap = new HashMap<>();
+        }
+        currentMonth = YearMonth.now();
     }
 
     public void showCalendar() {
-        try {
-            // Reload account data to refresh calendar events
-            this.account = Accounts.load(account.getName());
-            this.eventMap = account.getCalendar();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         stage.setTitle("Calendar - " + currentMonth.getMonth() + " " + currentMonth.getYear());
 
         BorderPane root = new BorderPane();
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(10));
-        grid.setHgap(5);
-        grid.setVgap(5);
+        root.setPadding(new Insets(10));
 
-        LocalDate firstOfMonth = currentMonth.atDay(1);
-        int daysInMonth = currentMonth.lengthOfMonth();
-        int startColumn = firstOfMonth.getDayOfWeek().getValue() % 7;  // Sunday = 0
+        monthLabel = new Label(currentMonth.getMonth() + " " + currentMonth.getYear());
+        monthLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18;");
 
-        int row = 0;
-        int col = startColumn;
+        calendarGrid = new GridPane();
+        calendarGrid.setHgap(10);
+        calendarGrid.setVgap(10);
+
+        // Always reload account and eventMap fresh before building grid
+        reloadAccountAndEvents();
+
+        buildCalendarGrid(currentMonth);
+
+        Button prevMonth = new Button("<");
+        Button nextMonth = new Button(">");
+
+        prevMonth.setOnAction(e -> {
+            currentMonth = currentMonth.minusMonths(1);
+            monthLabel.setText(currentMonth.getMonth() + " " + currentMonth.getYear());
+            reloadAccountAndEvents();
+            buildCalendarGrid(currentMonth);
+        });
+
+        nextMonth.setOnAction(e -> {
+            currentMonth = currentMonth.plusMonths(1);
+            monthLabel.setText(currentMonth.getMonth() + " " + currentMonth.getYear());
+            reloadAccountAndEvents();
+            buildCalendarGrid(currentMonth);
+        });
+
+        HBox navButtons = new HBox(10, prevMonth, nextMonth);
+        VBox topLayout = new VBox(10, monthLabel, navButtons);
+
+        Button backToHome = new Button("Back to Home");
+        backToHome.setOnAction(e -> Main.homePage());
+
+        VBox centerLayout = new VBox(10, calendarGrid, backToHome);
+        centerLayout.setPadding(new Insets(10));
+
+        root.setTop(topLayout);
+        root.setCenter(centerLayout);
+
+        Scene scene = new Scene(root, 800, 600);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    private void reloadAccountAndEvents() {
+        try {
+            if (account != null) {
+                // Reload account fresh by username (email) and update eventMap
+                account = Accounts.load(account.getName());
+                eventMap = account.getCalendar();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Keep old eventMap if reload fails
+        }
+    }
+
+    private void buildCalendarGrid(YearMonth month) {
+        calendarGrid.getChildren().clear();
+
+        // Days of week header (Monday to Sunday)
+        DayOfWeek[] daysOfWeek = DayOfWeek.values();
+        for (int i = 0; i < daysOfWeek.length; i++) {
+            Label dayLabel = new Label(daysOfWeek[i].toString().substring(0, 3));
+            dayLabel.setStyle("-fx-font-weight: bold;");
+            calendarGrid.add(dayLabel, i, 0);
+        }
+
+        LocalDate firstOfMonth = month.atDay(1);
+        // Adjust column: Monday = 0 ... Sunday = 6
+        int firstDayColumn = (firstOfMonth.getDayOfWeek().getValue() + 6) % 7;
+
+        int daysInMonth = month.lengthOfMonth();
+
+        int col = firstDayColumn;
+        int row = 1; // row 0 is header
 
         for (int day = 1; day <= daysInMonth; day++) {
-            LocalDate date = currentMonth.atDay(day);
+            LocalDate currentDate = month.atDay(day);
 
-            Button dayButton = new Button(String.valueOf(day));
-            dayButton.setMinSize(100, 100);
-            dayButton.setWrapText(true);
-            dayButton.setStyle("-fx-border-color: black; -fx-font-size: 14; -fx-text-alignment: center;");
+            Button dayBtn = new Button(String.valueOf(day));
+            dayBtn.setMinSize(100, 100);
+            dayBtn.setWrapText(true);
+            dayBtn.setStyle("-fx-border-color: black; -fx-font-size: 14; -fx-text-alignment: center;");
 
-            List<CalendarEvent> events = eventMap.getOrDefault(date, Collections.emptyList());
+            List<CalendarEvent> events = eventMap.getOrDefault(currentDate, Collections.emptyList());
             if (!events.isEmpty()) {
-                dayButton.setText(day + "\nEvents: " + events.size());
+                dayBtn.setText(day + "\nEvents: " + events.size());
+                dayBtn.setStyle(dayBtn.getStyle() + "-fx-background-color: lightblue;");
+                dayBtn.setTooltip(new Tooltip(events.size() + " event(s)"));
             }
 
-            final LocalDate thisDate = date;
-            dayButton.setOnAction(e -> showDayEvents(thisDate));
+            final LocalDate thisDate = currentDate;
+            dayBtn.setOnAction(e -> showDayEvents(thisDate));
 
-            grid.add(dayButton, col, row);
+            calendarGrid.add(dayBtn, col, row);
+
             col++;
             if (col == 7) {
                 col = 0;
                 row++;
             }
         }
-
-        Button backToHome = new Button("Back to Home");
-        backToHome.setOnAction(e -> Main.homePage());
-
-        VBox centerLayout = new VBox(10, grid, backToHome);
-        centerLayout.setPadding(new Insets(10));
-
-        root.setCenter(centerLayout);
-
-        stage.setScene(new Scene(root, 800, 500));
-        stage.show();
     }
 
     private void showDayEvents(LocalDate date) {
@@ -87,6 +150,8 @@ public class Calendar {
         root.setPadding(new Insets(10));
 
         Label title = new Label("Events on " + date);
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 16;");
+
         ListView<String> eventListView = new ListView<>();
 
         List<CalendarEvent> events = eventMap.getOrDefault(date, new ArrayList<>());
@@ -115,6 +180,8 @@ public class Calendar {
                     ex.printStackTrace();
                 }
                 showDayEvents(date);
+            } else {
+                showAlert("Please select an event to remove.");
             }
         });
 
@@ -122,6 +189,7 @@ public class Calendar {
         backBtn.setOnAction(e -> showCalendar());
 
         HBox buttons = new HBox(10, addBtn, removeBtn, backBtn);
+
         root.getChildren().addAll(title, eventListView, buttons);
 
         stage.setScene(new Scene(root, 500, 400));
@@ -133,6 +201,8 @@ public class Calendar {
         layout.setPadding(new Insets(20));
 
         Label title = new Label("Add Event - " + date);
+        title.setStyle("-fx-font-weight: bold; -fx-font-size: 16;");
+
         TextField subjectField = new TextField();
         subjectField.setPromptText("Subject");
 
@@ -144,6 +214,7 @@ public class Calendar {
 
         TextArea descArea = new TextArea();
         descArea.setPromptText("Description");
+        descArea.setPrefRowCount(4);
 
         Button addBtn = new Button("Add to Calendar");
         addBtn.setOnAction(e -> {
@@ -182,13 +253,14 @@ public class Calendar {
         alert.showAndWait();
     }
 
+    // Show events for a specific date (alias to showDayEvents)
+    public void showCalendarForDate(LocalDate date) {
+        showDayEvents(date);
+    }
+
+    // Show calendar focused on a particular month/year
     public void showMonth(LocalDate targetDate) {
         this.currentMonth = YearMonth.from(targetDate);
         showCalendar();
     }
-
-  public void showCalendarForDate(LocalDate date) {
-      showDayEvents(date);
-  }
-
 }

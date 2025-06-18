@@ -36,23 +36,53 @@ public class FlashcardsQuizView {
         VBox root = new VBox(10);
         root.setPadding(new javafx.geometry.Insets(10));
         Label label = new Label("Select Unit in " + subject);
-        ListView<String> unitList = new ListView<>(javafx.collections.FXCollections.observableArrayList(account.getSubjects().get(subject).keySet()));
+        ListView<String> unitList = new ListView<>(javafx.collections.FXCollections.observableArrayList(
+                account.getSubjects().get(subject).keySet()));
+
         unitList.setOnMouseClicked(e -> {
             String unit = unitList.getSelectionModel().getSelectedItem();
             if (unit != null) startQuiz(stage, account, mainApp, subject, unit);
         });
 
+        Button quizAll = new Button("Quiz Entire Subject");
+        quizAll.setOnAction(e -> startSubjectQuiz(stage, account, mainApp, subject));
+
         Button back = new Button("Back");
         back.setOnAction(e -> open(stage, account, mainApp));
 
-        root.getChildren().addAll(label, unitList, back);
-        stage.setScene(new Scene(root, 400, 400));
+        root.getChildren().addAll(label, unitList, quizAll, back);
+        stage.setScene(new Scene(root, 400, 450));
         stage.setTitle("Units");
         stage.show();
     }
 
+    private static void startSubjectQuiz(Stage stage, Accounts account, Main mainApp, String subject) {
+        List<String> allQuestions = new ArrayList<>();
+        Map<String, List<String>> units = account.getSubjects().get(subject);
+        if (units != null) {
+            for (List<String> qList : units.values()) {
+                allQuestions.addAll(qList);
+            }
+        }
+
+        if (allQuestions.isEmpty()) {
+            VBox root = new VBox(10, new Label("No questions in this subject."), new Button("Back"));
+            ((Button) root.getChildren().get(1)).setOnAction(e -> showUnits(stage, account, mainApp, subject));
+            root.setPadding(new javafx.geometry.Insets(10));
+            stage.setScene(new Scene(root, 400, 200));
+            stage.show();
+            return;
+        }
+
+        startQuiz(stage, account, mainApp, subject, "All Units", allQuestions);
+    }
+
     private static void startQuiz(Stage stage, Accounts account, Main mainApp, String subject, String unit) {
         List<String> qaList = new ArrayList<>(account.getSubjects().get(subject).get(unit));
+        startQuiz(stage, account, mainApp, subject, unit, qaList);
+    }
+
+    private static void startQuiz(Stage stage, Accounts account, Main mainApp, String subject, String unit, List<String> qaList) {
         if (qaList == null || qaList.isEmpty()) {
             VBox root = new VBox(10, new Label("No questions in this unit."), new Button("Back"));
             ((Button) root.getChildren().get(1)).setOnAction(e -> showUnits(stage, account, mainApp, subject));
@@ -86,7 +116,6 @@ public class FlashcardsQuizView {
                 account.addPoints(bonus);
                 feedback.setText("Correct! +" + bonus + " points. Total: " + account.getPoints());
 
-                // Save account after adding points
                 try {
                     Accounts.save(account);
                 } catch (IOException ex) {
@@ -134,8 +163,23 @@ public class FlashcardsQuizView {
         submit.setOnAction(e -> {
             if (!subject.getText().isEmpty() && !unit.getText().isEmpty() &&
                 !question.getText().isEmpty() && !answer.getText().isEmpty()) {
-                account.addQuestion(subject.getText().trim(), unit.getText().trim(), question.getText().trim(), answer.getText().trim());
-                status.setText("Added successfully!");
+                account.addQuestion(
+                    subject.getText().trim(),
+                    unit.getText().trim(),
+                    question.getText().trim(),
+                    answer.getText().trim()
+                );
+                try {
+                    Accounts.save(account);
+                    status.setText("Added successfully!");
+                    subject.clear();
+                    unit.clear();
+                    question.clear();
+                    answer.clear();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    status.setText("Failed to save question.");
+                }
             } else {
                 status.setText("Fill all fields!");
             }

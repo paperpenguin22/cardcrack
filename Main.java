@@ -125,7 +125,7 @@ public class Main extends Application {
                         Button jumpToDateBtn = new Button("Go to Day");
                         LocalDate selectedDate = date;
                         jumpToDateBtn.setOnAction(ev -> {
-                            Calendar calView = new Calendar(primaryStage, account);
+                            Calendar calView = new Calendar(primaryStage, account.getName());
                             calView.showCalendarForDate(selectedDate);
                         });
 
@@ -141,11 +141,11 @@ public class Main extends Application {
 
         Button openCalendar = new Button("Open Calendar");
         openCalendar.setOnAction(ev -> {
-            Calendar calView = new Calendar(primaryStage, account);
+            Calendar calView = new Calendar(primaryStage, account.getName());
             calView.showCalendar();
         });
 
-        Button friendRequestsBtn = new Button("Friend Requests");
+        Button friendRequestsBtn = new Button("Inbox");
         friendRequestsBtn.setOnAction(ev -> {
             FriendRequestsView.open(primaryStage, account, new Main());
         });
