@@ -18,7 +18,6 @@ public class Calendar {
     private GridPane calendarGrid;
     private Label monthLabel;
 
-    // Constructor takes Stage and username to load the account
     public Calendar(Stage stage, String username) {
         this.stage = stage;
         try {
@@ -45,9 +44,7 @@ public class Calendar {
         calendarGrid.setHgap(10);
         calendarGrid.setVgap(10);
 
-        // Always reload account and eventMap fresh before building grid
         reloadAccountAndEvents();
-
         buildCalendarGrid(currentMonth);
 
         Button prevMonth = new Button("<");
@@ -67,13 +64,16 @@ public class Calendar {
             buildCalendarGrid(currentMonth);
         });
 
-        HBox navButtons = new HBox(10, prevMonth, nextMonth);
-        VBox topLayout = new VBox(10, monthLabel, navButtons);
-
         Button backToHome = new Button("Back to Home");
         backToHome.setOnAction(e -> Main.homePage());
 
-        VBox centerLayout = new VBox(10, calendarGrid, backToHome);
+        HBox navRow = new HBox(10, prevMonth, nextMonth, backToHome);
+        navRow.setPadding(new Insets(5));
+
+        VBox topLayout = new VBox(10, monthLabel, navRow);
+        topLayout.setPadding(new Insets(10));
+
+        VBox centerLayout = new VBox(10, calendarGrid);
         centerLayout.setPadding(new Insets(10));
 
         root.setTop(topLayout);
@@ -87,20 +87,17 @@ public class Calendar {
     private void reloadAccountAndEvents() {
         try {
             if (account != null) {
-                // Reload account fresh by username (email) and update eventMap
                 account = Accounts.load(account.getName());
                 eventMap = account.getCalendar();
             }
         } catch (IOException e) {
             e.printStackTrace();
-            // Keep old eventMap if reload fails
         }
     }
 
     private void buildCalendarGrid(YearMonth month) {
         calendarGrid.getChildren().clear();
 
-        // Days of week header (Monday to Sunday)
         DayOfWeek[] daysOfWeek = DayOfWeek.values();
         for (int i = 0; i < daysOfWeek.length; i++) {
             Label dayLabel = new Label(daysOfWeek[i].toString().substring(0, 3));
@@ -109,13 +106,11 @@ public class Calendar {
         }
 
         LocalDate firstOfMonth = month.atDay(1);
-        // Adjust column: Monday = 0 ... Sunday = 6
         int firstDayColumn = (firstOfMonth.getDayOfWeek().getValue() + 6) % 7;
-
         int daysInMonth = month.lengthOfMonth();
 
         int col = firstDayColumn;
-        int row = 1; // row 0 is header
+        int row = 1;
 
         for (int day = 1; day <= daysInMonth; day++) {
             LocalDate currentDate = month.atDay(day);
@@ -253,12 +248,10 @@ public class Calendar {
         alert.showAndWait();
     }
 
-    // Show events for a specific date (alias to showDayEvents)
     public void showCalendarForDate(LocalDate date) {
         showDayEvents(date);
     }
 
-    // Show calendar focused on a particular month/year
     public void showMonth(LocalDate targetDate) {
         this.currentMonth = YearMonth.from(targetDate);
         showCalendar();

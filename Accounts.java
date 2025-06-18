@@ -16,8 +16,6 @@ public class Accounts {
     private Map<String, String> friendRequests = new HashMap<>();
     private Map<String, String> friendRequestsSent = new HashMap<>();
     private Map<LocalDate, List<CalendarEvent>> calendar = new HashMap<>();
-
-    // subject -> unit -> list of question|answer strings
     private Map<String, Map<String, List<String>>> subjects = new HashMap<>();
 
     public Accounts(String name, String email, String password) {
@@ -47,11 +45,22 @@ public class Accounts {
     public void addToCalendar(LocalDate date, String subject, String unit, String type, String description) {
         CalendarEvent newEvent = new CalendarEvent(subject, unit, type, description, date);
         calendar.computeIfAbsent(date, k -> new ArrayList<>()).add(newEvent);
+        // Ensure subject/unit is tracked, even without questions
+        subjects.computeIfAbsent(subject, k -> new HashMap<>())
+                .computeIfAbsent(unit, k -> new ArrayList<>());
     }
 
     public void addCalendarEvent(CalendarEvent event) {
         if (event == null || event.getDate() == null) return;
         calendar.computeIfAbsent(event.getDate(), k -> new ArrayList<>()).add(event);
+
+        // Also add subject/unit structure
+        String subject = event.getSubject();
+        String unit = event.getUnit();
+        if (subject != null && unit != null) {
+            subjects.computeIfAbsent(subject, k -> new HashMap<>())
+                    .computeIfAbsent(unit, k -> new ArrayList<>());
+        }
     }
 
     public void addPoints(int pts) {
@@ -89,13 +98,14 @@ public class Accounts {
         friends.remove(friendEmail.toLowerCase());
     }
 
+    // Updated to load by email
     public void acceptFriendRequest(String requesterEmail) throws IOException {
         requesterEmail = requesterEmail.toLowerCase();
         if (!friendRequests.containsKey(requesterEmail)) {
             throw new IllegalArgumentException("No friend request from " + requesterEmail);
         }
 
-        Accounts requester = Accounts.load(requesterEmail);
+        Accounts requester = Accounts.loadByEmail(requesterEmail); // Changed here
         if (requester == null) {
             throw new IOException("Requester account not found.");
         }
@@ -120,7 +130,6 @@ public class Accounts {
                 replaced = true;
                 while (i < lines.size() && !lines.get(i).equals("exit")) i++;
                 i++; // skip exit
-
                 writeAccountData(account, updated);
             } else {
                 updated.add(lines.get(i++));
@@ -156,9 +165,8 @@ public class Accounts {
 
         out.add("CalendarEvents:");
         for (var entry : account.calendar.entrySet()) {
-            LocalDate date = entry.getKey();
             for (CalendarEvent ev : entry.getValue()) {
-                out.add(date.toString() + "|" + ev.toString());
+                out.add(ev.toSaveString());
             }
         }
         out.add("EndCalendarEvents");
@@ -232,12 +240,120 @@ public class Accounts {
                         case "CalendarEvents:":
                             i++;
                             while (i < lines.size() && !"EndCalendarEvents".equals(lines.get(i).trim())) {
+                                String line = lines.get(i++).trim();
+                                try {
+                                    CalendarEvent ev = CalendarEvent.fromString(line);
+                                    if (ev.getDate() != null) {
+                                        calendar.computeIfAbsent(ev.getDate(), k -> new ArrayList<>()).add(ev);
+                                    }
+                                } catch (Exception e) {
+                                    System.out.println("Error parsing calendar event: " + line);
+                                    e.printStackTrace();
+                                }
+                            }
+                            i++;
+                            break;
+                        case "Subjects:":
+                            i++;
+                            while (i < lines.size() && !"EndSubjects".equals(lines.get(i).trim())) {
+                                String[] parts = lines.get(i++).split("\\|", 3);
+                                if (parts.length == 3) {
+                                    subjects.computeIfAbsent(parts[0], k -> new HashMap<>())
+                                            .computeIfAbsent(parts[1], k -> new ArrayList<>())
+                                            .add(parts[2]);
+                                }
+                            }
+                            i++;
+                            break;
+                        default:
+                            i++;
+                            break;
+                    }
+                }
+
+                Accounts account = new Accounts(currentName, em, pwd);
+                account.points = points;
+                account.friends = friends;
+                account.friendRequests = friendRequests;
+                account.friendRequestsSent = friendRequestsSent;
+                account.calendar = calendar;
+                account.subjects = subjects;
+
+                return account;
+            } else {
+                while (i < lines.size() && !lines.get(i).equals("exit")) i++;
+                i++;
+            }
+        }
+        return null;
+    }
+
+    // New method to load account by email
+    public static Accounts loadByEmail(String email) throws IOException {
+        if (!Files.exists(saveFile)) return null;
+        email = email.trim().toLowerCase();
+        List<String> lines = Files.readAllLines(saveFile);
+
+        int i = 0;
+        while (i < lines.size()) {
+            String currentName = lines.get(i++).trim();
+            if (i >= lines.size()) break;
+            String em = lines.get(i++).trim().toLowerCase();
+            if (i >= lines.size()) break;
+            String pwd = lines.get(i++).trim();
+
+            if (em.equals(email)) {
+                int points = 0;
+                if (i < lines.size() && lines.get(i).startsWith("Points:")) {
+                    points = Integer.parseInt(lines.get(i).substring(7).trim());
+                    i++;
+                }
+
+                List<String> friends = new ArrayList<>();
+                Map<String, String> friendRequests = new HashMap<>();
+                Map<String, String> friendRequestsSent = new HashMap<>();
+                Map<LocalDate, List<CalendarEvent>> calendar = new HashMap<>();
+                Map<String, Map<String, List<String>>> subjects = new HashMap<>();
+
+                while (i < lines.size() && !lines.get(i).equals("exit")) {
+                    String section = lines.get(i).trim();
+
+                    switch (section) {
+                        case "Friends:":
+                            i++;
+                            while (i < lines.size() && !"EndFriends".equals(lines.get(i).trim())) {
+                                friends.add(lines.get(i++).trim());
+                            }
+                            i++;
+                            break;
+                        case "FriendRequests:":
+                            i++;
+                            while (i < lines.size() && !"EndFriendRequests".equals(lines.get(i).trim())) {
                                 String[] parts = lines.get(i++).split("\\|", 2);
-                                if (parts.length == 2) {
-                                    try {
-                                        LocalDate date = LocalDate.parse(parts[0]);
-                                        calendar.computeIfAbsent(date, k -> new ArrayList<>()).add(CalendarEvent.fromString(parts[1]));
-                                    } catch (Exception e) {}
+                                if (parts.length == 2) friendRequests.put(parts[0], parts[1]);
+                            }
+                            i++;
+                            break;
+                        case "FriendRequestsSent:":
+                            i++;
+                            while (i < lines.size() && !"EndFriendRequestsSent".equals(lines.get(i).trim())) {
+                                String[] parts = lines.get(i++).split("\\|", 2);
+                                if (parts.length == 2) friendRequestsSent.put(parts[0], parts[1]);
+                            }
+                            i++;
+                            break;
+                        case "CalendarEvents:":
+                            i++;
+                            while (i < lines.size() && !"EndCalendarEvents".equals(lines.get(i).trim())) {
+                                String line = lines.get(i++).trim();
+                                try {
+                                    CalendarEvent ev = CalendarEvent.fromString(line);
+                                    if (ev.getDate() != null) {
+                                        calendar.computeIfAbsent(ev.getDate(), k -> new ArrayList<>()).add(ev);
+                                    }
+                                } catch (Exception e) {
+                                    System.out.println("Error parsing calendar event: " + line);
+                                    e.printStackTrace();
                                 }
                             }
                             i++;

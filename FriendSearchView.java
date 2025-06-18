@@ -49,18 +49,32 @@ public class FriendSearchView {
                 return;
             }
 
-            Accounts targetAccount;
+            Accounts targetAccount = null;
             try {
-                targetAccount = Accounts.load(emailToSend);
+                List<String> lines = java.nio.file.Files.readAllLines(Accounts.saveFile);
+                for (int i = 0; i < lines.size(); i++) {
+                    String possibleName = lines.get(i).trim();
+                    if (i + 1 < lines.size()) {
+                        String possibleEmail = lines.get(i + 1).trim().toLowerCase();
+                        if (possibleEmail.equals(emailToSend)) {
+                            targetAccount = Accounts.load(possibleName);
+                            break;
+                        }
+                    }
+                    while (i < lines.size() && !lines.get(i).equals("exit")) i++; // skip to next user
+                }
+
                 if (targetAccount == null) {
                     messageLabel.setText("No account found with this email.");
                     return;
                 }
+
             } catch (IOException ex) {
                 ex.printStackTrace();
                 messageLabel.setText("Error loading account.");
                 return;
             }
+
 
             // Add friend request to sender's sent list
             account.addFriendRequestSent(emailToSend, "");
